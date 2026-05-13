@@ -1,8 +1,9 @@
 .game-frame {
-  min-height: 100vh;
+  height: 100dvh;
   display: flex;
   flex-direction: column;
   background: #1a1a1a;
+  overflow: hidden;
 }
 
 .game-header {
@@ -55,6 +56,8 @@
   align-items: center;
   justify-content: center;
   padding: 24px;
+  min-height: 0;
+  overflow: hidden;
 }
 
 @media (max-width: 600px) {

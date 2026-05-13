@@ -10,9 +10,22 @@ type Cell = {
   adjacent: number
 }
 
-const ROWS = 9
-const COLS = 9
-const MINES = 10
+type DifficultyKey = 'easy' | 'medium' | 'hard'
+
+type Difficulty = {
+  key: DifficultyKey
+  label: string
+  rows: number
+  cols: number
+  mines: number
+  cellSize: number
+}
+
+const DIFFICULTIES: Difficulty[] = [
+  { key: 'easy', label: 'Easy', rows: 10, cols: 10, mines: 12, cellSize: 36 },
+  { key: 'medium', label: 'Medium', rows: 16, cols: 16, mines: 40, cellSize: 28 },
+  { key: 'hard', label: 'Hard', rows: 25, cols: 25, mines: 99, cellSize: 18 },
+]
 
 function makeBoard(rows: number, cols: number, mines: number): Cell[] {
   const total = rows * cols
@@ -59,23 +72,40 @@ function makeBoard(rows: number, cols: number, mines: number): Cell[] {
 }
 
 export default function Minesweeper() {
-  const [board, setBoard] = useState<Cell[]>(() => makeBoard(ROWS, COLS, MINES))
+  const [difficulty, setDifficulty] = useState<Difficulty | null>(null)
+  const [board, setBoard] = useState<Cell[]>([])
   const [gameOver, setGameOver] = useState(false)
   const [won, setWon] = useState(false)
 
   useEffect(() => {
-    const unrevealed = board.filter((c) => !c.revealed).length
-    if (!gameOver && unrevealed === MINES) setWon(true)
-  }, [board, gameOver])
+    if (!difficulty) return
+    const unrevealedSafeCells = board.filter((c) => !c.revealed && !c.isMine).length
+    if (!gameOver && unrevealedSafeCells === 0 && board.length > 0) setWon(true)
+  }, [board, gameOver, difficulty])
 
   const revealAllMines = () => {
     setBoard((b) => b.map((c) => (c.isMine ? { ...c, revealed: true } : c)))
   }
 
+  const startGame = (nextDifficulty: Difficulty) => {
+    setDifficulty(nextDifficulty)
+    setBoard(makeBoard(nextDifficulty.rows, nextDifficulty.cols, nextDifficulty.mines))
+    setGameOver(false)
+    setWon(false)
+  }
+
+  const changeDifficulty = () => {
+    setDifficulty(null)
+    setBoard([])
+    setGameOver(false)
+    setWon(false)
+  }
+
   const revealCell = (r: number, c: number) => {
+    if (!difficulty) return
     setBoard((prev) => {
       const b = prev.slice()
-      const idx = r * COLS + c
+      const idx = r * difficulty.cols + c
       const cell = b[idx]
       if (cell.revealed || cell.flagged || gameOver) return prev
       cell.revealed = true
@@ -93,8 +123,8 @@ export default function Minesweeper() {
             for (let dc = -1; dc <= 1; dc++) {
               const rr = cur.r + dr
               const cc = cur.c + dc
-              if (rr >= 0 && rr < ROWS && cc >= 0 && cc < COLS) {
-                const ni = rr * COLS + cc
+              if (rr >= 0 && rr < difficulty.rows && cc >= 0 && cc < difficulty.cols) {
+                const ni = rr * difficulty.cols + cc
                 const ncell = b[ni]
                 if (!ncell.revealed && !ncell.flagged) {
                   ncell.revealed = true
@@ -111,10 +141,11 @@ export default function Minesweeper() {
 
   const toggleFlag = (e: React.MouseEvent, r: number, c: number) => {
     e.preventDefault()
+    if (!difficulty) return
     if (gameOver) return
     setBoard((prev) => {
       const b = prev.slice()
-      const idx = r * COLS + c
+      const idx = r * difficulty.cols + c
       const cell = b[idx]
       if (cell.revealed) return prev
       cell.flagged = !cell.flagged
@@ -123,45 +154,75 @@ export default function Minesweeper() {
   }
 
   const reset = () => {
-    setBoard(makeBoard(ROWS, COLS, MINES))
+    if (!difficulty) return
+    setBoard(makeBoard(difficulty.rows, difficulty.cols, difficulty.mines))
     setGameOver(false)
     setWon(false)
+  }
+
+  if (!difficulty) {
+    return (
+      <div className="ms-container ms-menu">
+        <div className="ms-menu-card">
+          <div className="ms-menu-title">Choose difficulty</div>
+          <div className="ms-menu-list">
+            {DIFFICULTIES.map((option) => (
+              <button
+                key={option.key}
+                className="ms-menu-button"
+                onClick={() => startGame(option)}
+                type="button"
+              >
+                <span>{option.label}</span>
+                <span>{option.rows}x{option.cols}</span>
+              </button>
+            ))}
+          </div>
+        </div>
+      </div>
+    )
   }
 
   return (
     <div className="ms-container">
       <div className="ms-header">
-        <div className="ms-info">Mines: {MINES}</div>
+        <div className="ms-info">{difficulty.label} · {difficulty.rows}x{difficulty.cols} · Mines: {difficulty.mines}</div>
         <div className="ms-controls">
+          <button className="ms-btn" onClick={changeDifficulty}>Difficulty</button>
           <button className="ms-btn" onClick={reset}>Reset</button>
         </div>
       </div>
 
-      <div className="ms-grid" style={{ gridTemplateColumns: `repeat(${COLS}, 32px)` }}>
-        {board.map((cell) => (
-          <div
-            key={`${cell.r}-${cell.c}`}
-            className={`ms-cell ${cell.revealed ? 'revealed' : ''} ${cell.flagged ? 'flagged' : ''} ${cell.isMine && cell.revealed ? 'mine' : ''}`}
-            onClick={() => revealCell(cell.r, cell.c)}
-            onContextMenu={(e) => toggleFlag(e, cell.r, cell.c)}
-            role="button"
-            tabIndex={0}
-          >
-            {cell.revealed ? (
-              cell.isMine ? (
-                '●'
-              ) : cell.adjacent > 0 ? (
-                <span className={`num num-${cell.adjacent}`}>{cell.adjacent}</span>
+      <div className={`ms-board ${difficulty.key === 'hard' ? 'scrollable' : 'compact'}`}>
+        <div
+          className="ms-grid"
+          style={{ gridTemplateColumns: `repeat(${difficulty.cols}, ${difficulty.cellSize}px)` }}
+        >
+          {board.map((cell) => (
+            <div
+              key={`${cell.r}-${cell.c}`}
+              className={`ms-cell ${cell.revealed ? 'revealed' : ''} ${cell.flagged ? 'flagged' : ''} ${cell.isMine && cell.revealed ? 'mine' : ''}`}
+              onClick={() => revealCell(cell.r, cell.c)}
+              onContextMenu={(e) => toggleFlag(e, cell.r, cell.c)}
+              role="button"
+              tabIndex={0}
+            >
+              {cell.revealed ? (
+                cell.isMine ? (
+                  '●'
+                ) : cell.adjacent > 0 ? (
+                  <span className={`num num-${cell.adjacent}`}>{cell.adjacent}</span>
+                ) : (
+                  ''
+                )
+              ) : cell.flagged ? (
+                '⚑'
               ) : (
                 ''
-              )
-            ) : cell.flagged ? (
-              '⚑'
-            ) : (
-              ''
-            )}
-          </div>
-        ))}
+              )}
+            </div>
+          ))}
+        </div>
       </div>
 
       {gameOver && <div className="ms-overlay">Game Over</div>}
