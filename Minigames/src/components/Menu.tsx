@@ -1,12 +1,10 @@
 import { useState } from 'react'
+import { useNavigate } from 'react-router-dom'
 import './Menu.css'
 import MinesweeperIcon from './icons/MinesweeperIcon'
 
-interface MenuProps {
-  onSelectGame: (game: string) => void
-}
-
-export function Menu({ onSelectGame }: MenuProps) {
+export function Menu() {
+  const navigate = useNavigate()
   const [hoveredGame, setHoveredGame] = useState<string | null>(null)
 
   const games = [
@@ -16,6 +14,10 @@ export function Menu({ onSelectGame }: MenuProps) {
     { id: 'tetris', name: 'Tetris', icon: 'kanban' },
     { id: 'flappybird', name: 'Flappy Bird', icon: 'cloud' },
   ]
+
+  const handleGameSelect = (gameId: string) => {
+    navigate(`/${gameId}`)
+  }
 
   return (
     <div className="menu-container">
@@ -28,7 +30,7 @@ export function Menu({ onSelectGame }: MenuProps) {
           <button
             key={game.id}
             className={`game-button ${hoveredGame === game.id ? 'hovered' : ''}`}
-            onClick={() => onSelectGame(game.id)}
+            onClick={() => handleGameSelect(game.id)}
             onMouseEnter={() => setHoveredGame(game.id)}
             onMouseLeave={() => setHoveredGame(null)}
           >

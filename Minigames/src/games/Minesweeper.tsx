@@ -1,4 +1,6 @@
 import React, { useEffect, useState, useRef } from 'react'
+import { useParams, useNavigate } from 'react-router-dom'
+import { GameFrame } from '../components/GameFrame'
 import './Minesweeper.css'
 import FlagIcon from '../components/icons/FlagIcon'
 
@@ -76,6 +78,8 @@ function makeBoard(rows: number, cols: number, mines: number, exclude?: Set<numb
 }
 
 export default function Minesweeper() {
+  const { difficulty: difficultyParam } = useParams<{ difficulty?: string }>()
+  const navigate = useNavigate()
   const [difficulty, setDifficulty] = useState<Difficulty | null>(null)
   const [board, setBoard] = useState<Cell[]>([])
   const [gameOver, setGameOver] = useState(false)
@@ -86,6 +90,30 @@ export default function Minesweeper() {
   const [elapsedTime, setElapsedTime] = useState(0)
   const gridRef = useRef<HTMLDivElement>(null)
   const flags = board.filter((cell) => cell.flagged).length
+
+  // Load difficulty from URL param on mount
+  useEffect(() => {
+    if (difficultyParam) {
+      const selectedDifficulty = DIFFICULTIES.find((d) => d.key === difficultyParam)
+      if (selectedDifficulty) {
+        setDifficulty(selectedDifficulty)
+        // create an empty board first; place mines on first click to guarantee a safe first reveal
+        setBoard(makeBoard(selectedDifficulty.rows, selectedDifficulty.cols, 0))
+        setMinesPlaced(false)
+        setGameOver(false)
+        setWon(false)
+        setStartTime(null)
+        setElapsedTime(0)
+      }
+    } else {
+      // Clear difficulty when no param
+      setDifficulty(null)
+      setBoard([])
+      setGameOver(false)
+      setWon(false)
+      setMinesPlaced(false)
+    }
+  }, [difficultyParam])
 
 
   const flagAllUnflaggedMines = () => {
@@ -213,22 +241,11 @@ export default function Minesweeper() {
   }
 
   const startGame = (nextDifficulty: Difficulty) => {
-    setDifficulty(nextDifficulty)
-    // create an empty board first; place mines on first click to guarantee a safe first reveal
-    setBoard(makeBoard(nextDifficulty.rows, nextDifficulty.cols, 0))
-    setMinesPlaced(false)
-    setGameOver(false)
-    setWon(false)
-    setStartTime(null)
-    setElapsedTime(0)
+    navigate(`/minesweeper/${nextDifficulty.key}`)
   }
 
   const changeDifficulty = () => {
-    setDifficulty(null)
-    setBoard([])
-    setGameOver(false)
-    setWon(false)
-    setMinesPlaced(false)
+    navigate('/minesweeper')
   }
 
   const revealCell = (r: number, c: number) => {
@@ -328,7 +345,7 @@ export default function Minesweeper() {
     )
   }
 
-  return (
+  const gameContent = (
     <div className="ms-container">
       <div className="ms-header">
         <div className="ms-info">{difficulty.label} · {difficulty.rows}x{difficulty.cols} · Mines: {difficulty.mines - flags}</div>
@@ -339,7 +356,7 @@ export default function Minesweeper() {
         </div>
       </div>
 
-      <div className={`ms-board ${difficulty.key === 'hard' ? 'scrollable' : 'compact'}`}>
+      <div className="ms-board scrollable">
         <div
           ref={gridRef}
           className="ms-grid"
@@ -393,5 +410,11 @@ export default function Minesweeper() {
       {gameOver && <div className="ms-overlay">Game Over</div>}
       {won && <div className="ms-overlay success">You Win · {formatTime(elapsedTime)}</div>}
     </div>
+  )
+
+  return (
+    <GameFrame gameName="Minesweeper" onBack={() => navigate('/')}>
+      {gameContent}
+    </GameFrame>
   )
 }

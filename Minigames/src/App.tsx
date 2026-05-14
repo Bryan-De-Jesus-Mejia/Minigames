@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { Routes, Route, useNavigate } from 'react-router-dom'
 import { Menu } from './components/Menu'
 import { GameFrame } from './components/GameFrame'
 import { Placeholder } from './games/Placeholder'
@@ -6,14 +6,10 @@ import Minesweeper from './games/Minesweeper'
 import './App.css'
 
 function App() {
-  const [currentGame, setCurrentGame] = useState<string | null>(null)
-
-  const handleSelectGame = (gameId: string) => {
-    setCurrentGame(gameId)
-  }
+  const navigate = useNavigate()
 
   const handleBackToMenu = () => {
-    setCurrentGame(null)
+    navigate('/')
   }
 
   const gameNames: { [key: string]: string } = {
@@ -24,22 +20,20 @@ function App() {
     flappybird: 'Flappy Bird',
   }
 
-  if (!currentGame) {
-    return <Menu onSelectGame={handleSelectGame} />
-  }
-
-  if (currentGame === 'minesweeper') {
-    return (
-      <GameFrame gameName={gameNames[currentGame]} onBack={handleBackToMenu}>
-        <Minesweeper />
-      </GameFrame>
-    )
-  }
-
   return (
-    <GameFrame gameName={gameNames[currentGame]} onBack={handleBackToMenu}>
-      <Placeholder gameName={gameNames[currentGame]} />
-    </GameFrame>
+    <Routes>
+      <Route path="/" element={<Menu />} />
+      <Route path="/minesweeper" element={<Minesweeper />} />
+      <Route path="/minesweeper/:difficulty" element={<Minesweeper />} />
+      <Route
+        path="/:game"
+        element={(
+          <GameFrame gameName={gameNames['memory']} onBack={handleBackToMenu}>
+            <Placeholder gameName={gameNames['memory']} />
+          </GameFrame>
+        )}
+      />
+    </Routes>
   )
 }
 
