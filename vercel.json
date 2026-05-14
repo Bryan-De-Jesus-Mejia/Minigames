@@ -1,8 +1,7 @@
 {
   "buildCommand": "npm run build",
-  "outputDirectory": "Minigames/dist",
+  "outputDirectory": "dist",
   "framework": "vite",
-  "env": {},
   "routes": [
     {
       "src": "^/(?!.*\\.).*$",
