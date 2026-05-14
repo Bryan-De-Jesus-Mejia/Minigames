@@ -4,6 +4,10 @@
   box-sizing: border-box;
 }
 
+:root {
+  font-size: 18px;
+}
+
 body {
   font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', system-ui, sans-serif;
   background: #1a1a1a;
@@ -15,4 +19,12 @@ body {
 #root {
   width: 100%;
   height: 100vh;
+}
+
+@media (min-width: 1600px) {
+  :root { font-size: 20px; }
+}
+
+@media (min-width: 2200px) {
+  :root { font-size: 22px; }
 }

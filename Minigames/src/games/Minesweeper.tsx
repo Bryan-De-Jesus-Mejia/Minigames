@@ -1,5 +1,6 @@
-import React, { useEffect, useState } from 'react'
+import React, { useEffect, useState, useRef } from 'react'
 import './Minesweeper.css'
+import FlagIcon from '../components/icons/FlagIcon'
 
 type Cell = {
   r: number
@@ -24,10 +25,10 @@ type Difficulty = {
 const DIFFICULTIES: Difficulty[] = [
   { key: 'easy', label: 'Easy', rows: 10, cols: 10, mines: 12, cellSize: 36 },
   { key: 'medium', label: 'Medium', rows: 16, cols: 16, mines: 40, cellSize: 28 },
-  { key: 'hard', label: 'Hard', rows: 25, cols: 25, mines: 99, cellSize: 18 },
+  { key: 'hard', label: 'Hard', rows: 25, cols: 25, mines: 99, cellSize: 28 },
 ]
 
-function makeBoard(rows: number, cols: number, mines: number): Cell[] {
+function makeBoard(rows: number, cols: number, mines: number, exclude?: Set<number>): Cell[] {
   const total = rows * cols
   const cells: Cell[] = Array.from({ length: total }, (_, i) => ({
     r: Math.floor(i / cols),
@@ -38,12 +39,15 @@ function makeBoard(rows: number, cols: number, mines: number): Cell[] {
     adjacent: 0,
   }))
 
-  let placed = 0
-  while (placed < mines) {
-    const idx = Math.floor(Math.random() * total)
-    if (!cells[idx].isMine) {
-      cells[idx].isMine = true
-      placed++
+  if (mines > 0) {
+    let placed = 0
+    while (placed < mines) {
+      const idx = Math.floor(Math.random() * total)
+      if (exclude && exclude.has(idx)) continue
+      if (!cells[idx].isMine) {
+        cells[idx].isMine = true
+        placed++
+      }
     }
   }
 
@@ -76,12 +80,133 @@ export default function Minesweeper() {
   const [board, setBoard] = useState<Cell[]>([])
   const [gameOver, setGameOver] = useState(false)
   const [won, setWon] = useState(false)
+  const [minesPlaced, setMinesPlaced] = useState(false)
+  const [flagMode, setFlagMode] = useState(false)
+  const [startTime, setStartTime] = useState<number | null>(null)
+  const [elapsedTime, setElapsedTime] = useState(0)
+  const gridRef = useRef<HTMLDivElement>(null)
+  const flags = board.filter((cell) => cell.flagged).length
+
+
+  const flagAllUnflaggedMines = () => {
+    setBoard((b) => b.map((c) => (c.isMine && !c.flagged ? { ...c, flagged: true } : c)))
+  }
+
+  const formatTime = (seconds: number): string => {
+    const hours = Math.floor(seconds / 3600)
+    const minutes = Math.floor((seconds % 3600) / 60)
+    const secs = seconds % 60
+    
+    if (hours > 0) {
+      return `${hours}h ${minutes}m ${secs}s`
+    } else if (minutes > 0) {
+      return `${minutes}m ${secs}s`
+    } else {
+      return `${secs}s`
+    }
+  }
+
+  const toggleFlagAt = (r: number, c: number) => {
+    if (!difficulty) return
+    if (gameOver || won) return
+    setBoard((prev) => {
+      const b = prev.slice()
+      const idx = r * difficulty.cols + c
+      const cell = b[idx]
+      if (cell.revealed) return prev
+      const newFlag = !cell.flagged
+      b[idx] = { ...cell, flagged: newFlag }
+      return b
+    })
+  }
+
+  const chordReveal = (r: number, c: number) => {
+    if (!difficulty) return
+    if (gameOver || won) return
+
+    setBoard((prev) => {
+      const b = prev.slice()
+      const idx = r * difficulty.cols + c
+      const cell = b[idx]
+      if (!cell.revealed || cell.adjacent === 0) return prev
+
+      let adjacentFlags = 0
+      const neighbors: number[] = []
+
+      for (let dr = -1; dr <= 1; dr++) {
+        for (let dc = -1; dc <= 1; dc++) {
+          if (dr === 0 && dc === 0) continue
+          const rr = r + dr
+          const cc = c + dc
+          if (rr >= 0 && rr < difficulty.rows && cc >= 0 && cc < difficulty.cols) {
+            const ni = rr * difficulty.cols + cc
+            const neighbor = b[ni]
+            if (neighbor.flagged) adjacentFlags++
+            else if (!neighbor.revealed) neighbors.push(ni)
+          }
+        }
+      }
+
+      if (adjacentFlags < cell.adjacent) return prev
+
+      for (const ni of neighbors) {
+        const neighbor = b[ni]
+        if (neighbor.flagged || neighbor.revealed) continue
+        neighbor.revealed = true
+        if (neighbor.isMine) {
+          setGameOver(true)
+          revealAllMines()
+          return b
+        }
+      }
+
+      // Flood-fill from any newly revealed empty cells
+      const stack: Cell[] = []
+      for (const ni of neighbors) {
+        if (b[ni].adjacent === 0 && b[ni].revealed) {
+          stack.push(b[ni])
+        }
+      }
+
+      while (stack.length) {
+        const cur = stack.pop()!
+        for (let dr = -1; dr <= 1; dr++) {
+          for (let dc = -1; dc <= 1; dc++) {
+            const rr = cur.r + dr
+            const cc = cur.c + dc
+            if (rr >= 0 && rr < difficulty.rows && cc >= 0 && cc < difficulty.cols) {
+              const ni = rr * difficulty.cols + cc
+              const ncell = b[ni]
+              if (!ncell.revealed && !ncell.flagged) {
+                ncell.revealed = true
+                if (ncell.adjacent === 0 && !ncell.isMine) stack.push(ncell)
+              }
+            }
+          }
+        }
+      }
+
+      return b
+    })
+  }
+
+  useEffect(() => {
+    if (!startTime || gameOver || won) return
+    const interval = setInterval(() => {
+      setElapsedTime(Math.floor((Date.now() - startTime) / 1000))
+    }, 100)
+    return () => clearInterval(interval)
+  }, [startTime, gameOver, won])
 
   useEffect(() => {
     if (!difficulty) return
     const unrevealedSafeCells = board.filter((c) => !c.revealed && !c.isMine).length
-    if (!gameOver && unrevealedSafeCells === 0 && board.length > 0) setWon(true)
-  }, [board, gameOver, difficulty])
+    if (!gameOver && !won && unrevealedSafeCells === 0 && board.length > 0) {
+      setWon(true)
+      // Auto-flag all unflagged mines on win
+      flagAllUnflaggedMines()
+    }
+  }, [board, gameOver, difficulty, won])
 
   const revealAllMines = () => {
     setBoard((b) => b.map((c) => (c.isMine ? { ...c, revealed: true } : c)))
@@ -89,9 +214,13 @@ export default function Minesweeper() {
 
   const startGame = (nextDifficulty: Difficulty) => {
     setDifficulty(nextDifficulty)
-    setBoard(makeBoard(nextDifficulty.rows, nextDifficulty.cols, nextDifficulty.mines))
+    // create an empty board first; place mines on first click to guarantee a safe first reveal
+    setBoard(makeBoard(nextDifficulty.rows, nextDifficulty.cols, 0))
+    setMinesPlaced(false)
     setGameOver(false)
     setWon(false)
+    setStartTime(null)
+    setElapsedTime(0)
   }
 
   const changeDifficulty = () => {
@@ -99,15 +228,35 @@ export default function Minesweeper() {
     setBoard([])
     setGameOver(false)
     setWon(false)
+    setMinesPlaced(false)
   }
 
   const revealCell = (r: number, c: number) => {
     if (!difficulty) return
+    if (gameOver || won) return
     setBoard((prev) => {
-      const b = prev.slice()
+      let b = prev.slice()
+
+      // On first click, place mines while avoiding the clicked cell and its neighbors
+      if (!minesPlaced) {
+        const exclude = new Set<number>()
+        for (let dr = -1; dr <= 1; dr++) {
+          for (let dc = -1; dc <= 1; dc++) {
+            const rr = r + dr
+            const cc = c + dc
+            if (rr >= 0 && rr < difficulty.rows && cc >= 0 && cc < difficulty.cols) {
+              exclude.add(rr * difficulty.cols + cc)
+            }
+          }
+        }
+        b = makeBoard(difficulty.rows, difficulty.cols, difficulty.mines, exclude)
+        setMinesPlaced(true)
+        setStartTime(Date.now())
+      }
+
       const idx = r * difficulty.cols + c
       const cell = b[idx]
-      if (cell.revealed || cell.flagged || gameOver) return prev
+      if (cell.revealed || cell.flagged) return b
       cell.revealed = true
       if (cell.isMine) {
         setGameOver(true)
@@ -142,22 +291,18 @@ export default function Minesweeper() {
   const toggleFlag = (e: React.MouseEvent, r: number, c: number) => {
     e.preventDefault()
     if (!difficulty) return
-    if (gameOver) return
-    setBoard((prev) => {
-      const b = prev.slice()
-      const idx = r * difficulty.cols + c
-      const cell = b[idx]
-      if (cell.revealed) return prev
-      cell.flagged = !cell.flagged
-      return b
-    })
+    if (gameOver || won) return
+    toggleFlagAt(r, c)
   }
 
   const reset = () => {
     if (!difficulty) return
-    setBoard(makeBoard(difficulty.rows, difficulty.cols, difficulty.mines))
+    setBoard(makeBoard(difficulty.rows, difficulty.cols, 0))
+    setMinesPlaced(false)
     setGameOver(false)
     setWon(false)
+    setStartTime(null)
+    setElapsedTime(0)
   }
 
   if (!difficulty) {
@@ -186,8 +331,9 @@ export default function Minesweeper() {
   return (
     <div className="ms-container">
       <div className="ms-header">
-        <div className="ms-info">{difficulty.label} · {difficulty.rows}x{difficulty.cols} · Mines: {difficulty.mines}</div>
+        <div className="ms-info">{difficulty.label} · {difficulty.rows}x{difficulty.cols} · Mines: {difficulty.mines - flags}</div>
         <div className="ms-controls">
+          <button className={`ms-btn ${flagMode ? 'active' : ''}`} onClick={() => setFlagMode((f) => !f)}>{flagMode ? 'Flag: ON' : 'Flag: OFF'}</button>
           <button className="ms-btn" onClick={changeDifficulty}>Difficulty</button>
           <button className="ms-btn" onClick={reset}>Reset</button>
         </div>
@@ -195,14 +341,33 @@ export default function Minesweeper() {
 
       <div className={`ms-board ${difficulty.key === 'hard' ? 'scrollable' : 'compact'}`}>
         <div
+          ref={gridRef}
           className="ms-grid"
-          style={{ gridTemplateColumns: `repeat(${difficulty.cols}, ${difficulty.cellSize}px)` }}
+          style={{
+            gridTemplateColumns: `repeat(${difficulty.cols}, ${difficulty.cellSize}px)`,
+          } as React.CSSProperties}
         >
+
           {board.map((cell) => (
             <div
               key={`${cell.r}-${cell.c}`}
+              data-key={`${cell.r}-${cell.c}`}
               className={`ms-cell ${cell.revealed ? 'revealed' : ''} ${cell.flagged ? 'flagged' : ''} ${cell.isMine && cell.revealed ? 'mine' : ''}`}
-              onClick={() => revealCell(cell.r, cell.c)}
+              onClick={() => {
+                if (won) return
+
+                if (cell.revealed && cell.adjacent > 0) {
+                  chordReveal(cell.r, cell.c)
+                  return
+                }
+
+                if (flagMode) {
+                  toggleFlagAt(cell.r, cell.c)
+                  return
+                }
+
+                revealCell(cell.r, cell.c)
+              }}
               onContextMenu={(e) => toggleFlag(e, cell.r, cell.c)}
               role="button"
               tabIndex={0}
@@ -216,7 +381,7 @@ export default function Minesweeper() {
                   ''
                 )
               ) : cell.flagged ? (
-                '⚑'
+                <FlagIcon className="ms-flag-icon" />
               ) : (
                 ''
               )}
@@ -226,7 +391,7 @@ export default function Minesweeper() {
       </div>
 
       {gameOver && <div className="ms-overlay">Game Over</div>}
-      {won && <div className="ms-overlay success">You Win</div>}
+      {won && <div className="ms-overlay success">You Win · {formatTime(elapsedTime)}</div>}
     </div>
   )
 }
