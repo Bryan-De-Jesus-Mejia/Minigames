@@ -1,4 +1,9 @@
 {
+  "scripts": {
+    "dev": "cd Minigames && npm run dev",
+    "build": "cd Minigames && npm run build",
+    "deploy": "vercel --prod"
+  },
   "dependencies": {
     "bootstrap-icons": "^1.13.1"
   }
