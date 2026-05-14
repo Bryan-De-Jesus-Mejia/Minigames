@@ -1,0 +1,13 @@
+{
+  "buildCommand": "npm run build",
+  "outputDirectory": "dist",
+  "framework": "vite",
+  "nodeVersion": "20.x",
+  "env": {},
+  "routes": [
+    {
+      "src": "^/(?!.*\\.).*$",
+      "dest": "/index.html"
+    }
+  ]
+}
