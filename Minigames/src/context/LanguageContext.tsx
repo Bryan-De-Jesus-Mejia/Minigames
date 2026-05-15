@@ -32,6 +32,11 @@ const translations: Record<Language, Record<string, string>> = {
     'game.win': 'You Win',
     'flag.on': 'ON',
     'flag.off': 'OFF',
+    'leaderboard.title': 'Leaderboard',
+    'leaderboard.empty': 'No wins recorded yet.',
+    'leaderboard.view': 'Leaderboard',
+    'leaderboard.back': 'Back to game',
+    'leaderboard.podium': 'Podium',
   },
   es: {
     'menu.title': 'MINIGAMES',
@@ -53,6 +58,11 @@ const translations: Record<Language, Record<string, string>> = {
     'game.win': 'Has ganado',
     'flag.on': 'ENCENDIDO',
     'flag.off': 'APAGADO',
+    'leaderboard.title': 'Clasificacion',
+    'leaderboard.empty': 'Aun no hay victorias registradas.',
+    'leaderboard.view': 'Clasificacion',
+    'leaderboard.back': 'Volver al juego',
+    'leaderboard.podium': 'Podio',
   },
   
 }
