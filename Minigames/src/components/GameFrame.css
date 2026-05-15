@@ -9,10 +9,11 @@
 .game-header {
   display: flex;
   align-items: center;
-  justify-content: space-between;
+  justify-content: flex-start;
   padding: 20px 24px;
   background: #222222;
   border-bottom: 1px solid #2a2a2a;
+  position: relative;
 }
 
 .back-button {
@@ -44,10 +45,20 @@
   color: #ffffff;
   margin: 0;
   letter-spacing: 1px;
+  position: absolute;
+  left: 50%;
+  transform: translateX(-50%);
+  max-width: calc(100% - 220px);
+  text-align: center;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
 .header-spacer {
-  width: 70px;
+  margin-left: auto;
+  display: flex;
+  align-items: center;
 }
 
 .game-content {

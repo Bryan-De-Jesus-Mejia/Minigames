@@ -1,6 +1,7 @@
 import React, { useEffect, useState, useRef } from 'react'
 import { useParams, useNavigate } from 'react-router-dom'
 import { GameFrame } from '../components/GameFrame'
+import { useLanguage } from '../context/LanguageContext'
 import './Minesweeper.css'
 import FlagIcon from '../components/icons/FlagIcon'
 
@@ -78,8 +79,9 @@ function makeBoard(rows: number, cols: number, mines: number, exclude?: Set<numb
 }
 
 export default function Minesweeper() {
-  const { difficulty: difficultyParam } = useParams<{ difficulty?: string }>()
+  const { lang, difficulty: difficultyParam } = useParams<{ lang: string; difficulty?: string }>()
   const navigate = useNavigate()
+  const { t } = useLanguage()
   const [difficulty, setDifficulty] = useState<Difficulty | null>(null)
   const [board, setBoard] = useState<Cell[]>([])
   const [gameOver, setGameOver] = useState(false)
@@ -241,11 +243,11 @@ export default function Minesweeper() {
   }
 
   const startGame = (nextDifficulty: Difficulty) => {
-    navigate(`/minesweeper/${nextDifficulty.key}`)
+     navigate(`/${lang}/minesweeper/${nextDifficulty.key}`)
   }
 
   const changeDifficulty = () => {
-    navigate('/minesweeper')
+     navigate(`/${lang}/minesweeper`)
   }
 
   const revealCell = (r: number, c: number) => {
@@ -324,35 +326,37 @@ export default function Minesweeper() {
 
   if (!difficulty) {
     return (
-      <div className="ms-container ms-menu">
-        <div className="ms-menu-card">
-          <div className="ms-menu-title">Choose difficulty</div>
-          <div className="ms-menu-list">
-            {DIFFICULTIES.map((option) => (
-              <button
-                key={option.key}
-                className="ms-menu-button"
-                onClick={() => startGame(option)}
-                type="button"
-              >
-                <span>{option.label}</span>
-                <span>{option.rows}x{option.cols}</span>
-              </button>
-            ))}
+      <GameFrame gameName={t('minesweeper')} onBack={() => navigate(`/${lang}`)}>
+        <div className="ms-container ms-menu">
+          <div className="ms-menu-card">
+            <div className="ms-menu-title">{t('difficulty.choose')}</div>
+            <div className="ms-menu-list">
+              {DIFFICULTIES.map((option) => (
+                <button
+                  key={option.key}
+                  className="ms-menu-button"
+                  onClick={() => startGame(option)}
+                  type="button"
+                >
+                  <span>{t(`difficulty.${option.key}`)}</span>
+                  <span>{option.rows}x{option.cols}</span>
+                </button>
+              ))}
+            </div>
           </div>
         </div>
-      </div>
+      </GameFrame>
     )
   }
 
   const gameContent = (
     <div className="ms-container">
       <div className="ms-header">
-        <div className="ms-info">{difficulty.label} · {difficulty.rows}x{difficulty.cols} · Mines: {difficulty.mines - flags}</div>
+        <div className="ms-info">{t(`difficulty.${difficulty.key}`)} · {difficulty.rows}x{difficulty.cols} · {t('btn.flag')}: {difficulty.mines - flags}</div>
         <div className="ms-controls">
-          <button className={`ms-btn ${flagMode ? 'active' : ''}`} onClick={() => setFlagMode((f) => !f)}>{flagMode ? 'Flag: ON' : 'Flag: OFF'}</button>
-          <button className="ms-btn" onClick={changeDifficulty}>Difficulty</button>
-          <button className="ms-btn" onClick={reset}>Reset</button>
+          <button className={`ms-btn ${flagMode ? 'active' : ''}`} onClick={() => setFlagMode((f) => !f)}>{flagMode ? `${t('btn.flag')}: ${t('flag.on')}` : `${t('btn.flag')}: ${t('flag.off')}`}</button>
+          <button className="ms-btn" onClick={changeDifficulty}>{t('btn.difficulty')}</button>
+          <button className="ms-btn" onClick={reset}>{t('btn.reset')}</button>
         </div>
       </div>
 
@@ -407,13 +411,13 @@ export default function Minesweeper() {
         </div>
       </div>
 
-      {gameOver && <div className="ms-overlay">Game Over</div>}
-      {won && <div className="ms-overlay success">You Win · {formatTime(elapsedTime)}</div>}
+      {gameOver && <div className="ms-overlay">{t('game.over')}</div>}
+      {won && <div className="ms-overlay success">{t('game.win')} · {formatTime(elapsedTime)}</div>}
     </div>
   )
 
   return (
-    <GameFrame gameName="Minesweeper" onBack={() => navigate('/')}>
+    <GameFrame gameName={t('minesweeper')} onBack={() => navigate(`/${lang}`)}>
       {gameContent}
     </GameFrame>
   )

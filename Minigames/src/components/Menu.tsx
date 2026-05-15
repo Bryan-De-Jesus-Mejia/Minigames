@@ -1,29 +1,52 @@
 import { useState } from 'react'
-import { useNavigate } from 'react-router-dom'
+import { useNavigate, useParams } from 'react-router-dom'
+import { useLanguage } from '../context/LanguageContext'
 import './Menu.css'
 import MinesweeperIcon from './icons/MinesweeperIcon'
 
 export function Menu() {
   const navigate = useNavigate()
+  const { lang } = useParams<{ lang: string }>()
+  const { language, setLanguage, t } = useLanguage()
   const [hoveredGame, setHoveredGame] = useState<string | null>(null)
 
   const games = [
-    { id: 'minesweeper', name: 'Minesweeper', Icon: MinesweeperIcon },
-    { id: 'memory', name: 'Memory', icon: 'grid-3x3' },
-    { id: 'snake', name: 'Snake', icon: 'play' },
-    { id: 'tetris', name: 'Tetris', icon: 'kanban' },
-    { id: 'flappybird', name: 'Flappy Bird', icon: 'cloud' },
+    { id: 'minesweeper', name: t('minesweeper'), Icon: MinesweeperIcon },
+    { id: 'memory', name: t('memory'), icon: 'grid-3x3' },
+    { id: 'snake', name: t('snake'), icon: 'play' },
+    { id: 'tetris', name: t('tetris'), icon: 'kanban' },
+    { id: 'flappybird', name: t('flappybird'), icon: 'cloud' },
   ]
 
   const handleGameSelect = (gameId: string) => {
-    navigate(`/${gameId}`)
+    navigate(`/${lang}/${gameId}`)
+  }
+
+  const handleLanguageChange = (newLang: string) => {
+    setLanguage(newLang as 'en' | 'es')
+    navigate(`/${newLang}`)
   }
 
   return (
     <div className="menu-container">
       <div className="menu-header">
-        <h1 className="menu-title">MINIGAMES</h1>
+        <h1 className="menu-title">{t('menu.title')}</h1>
         <div className="menu-divider"></div>
+        <div className="language-selector">
+          <button
+            className={`lang-btn ${language === 'en' ? 'active' : ''}`}
+            onClick={() => handleLanguageChange('en')}
+          >
+            EN
+          </button>
+          <button
+            className={`lang-btn ${language === 'es' ? 'active' : ''}`}
+            onClick={() => handleLanguageChange('es')}
+          >
+            ES
+          </button>
+          
+        </div>
       </div>
       <div className="games-list">
         {games.map((game) => (
