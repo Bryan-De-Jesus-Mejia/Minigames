@@ -90,6 +90,14 @@
   font-size: clamp(0.9rem, 1.2vw, 1.05rem);
 }
 
+.ms-timer {
+  display: inline-block;
+  min-width: 7.5ch;
+  text-align: left;
+  font-variant-numeric: tabular-nums;
+  font-feature-settings: 'tnum' 1;
+}
+
 .ms-controls {
   display: flex;
   gap: 8px;

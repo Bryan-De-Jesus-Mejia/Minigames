@@ -122,18 +122,11 @@ export default function Minesweeper() {
     setBoard((b) => b.map((c) => (c.isMine && !c.flagged ? { ...c, flagged: true } : c)))
   }
 
-  const formatTime = (seconds: number): string => {
-    const hours = Math.floor(seconds / 3600)
-    const minutes = Math.floor((seconds % 3600) / 60)
-    const secs = seconds % 60
-    
-    if (hours > 0) {
-      return `${hours}h ${minutes}m ${secs}s`
-    } else if (minutes > 0) {
-      return `${minutes}m ${secs}s`
-    } else {
-      return `${secs}s`
-    }
+  const formatTime = (totalSeconds: number): string => {
+    const minutes = Math.floor(totalSeconds / 60)
+    const seconds = Math.floor(totalSeconds % 60)
+    const milliseconds = Math.floor((totalSeconds % 1) * 1000)
+    return `${String(minutes).padStart(2, '0')}:${String(seconds).padStart(2, '0')}.${String(milliseconds).padStart(3, '0')}`
   }
 
   const toggleFlagAt = (r: number, c: number) => {
@@ -223,8 +216,8 @@ export default function Minesweeper() {
   useEffect(() => {
     if (!startTime || gameOver || won) return
     const interval = setInterval(() => {
-      setElapsedTime(Math.floor((Date.now() - startTime) / 1000))
-    }, 100)
+      setElapsedTime((Date.now() - startTime) / 1000)
+    }, 50)
     return () => clearInterval(interval)
   }, [startTime, gameOver, won])
 
@@ -352,7 +345,7 @@ export default function Minesweeper() {
   const gameContent = (
     <div className="ms-container">
       <div className="ms-header">
-        <div className="ms-info">{t(`difficulty.${difficulty.key}`)} · {difficulty.rows}x{difficulty.cols} · {t('btn.flag')}: {difficulty.mines - flags}</div>
+        <div className="ms-info">{t(`difficulty.${difficulty.key}`)} · {difficulty.rows}x{difficulty.cols} · {t('btn.flag')}: {difficulty.mines - flags} · {t('btn.timer')}: <span className="ms-timer">{formatTime(elapsedTime)}</span></div>
         <div className="ms-controls">
           <button className={`ms-btn ${flagMode ? 'active' : ''}`} onClick={() => setFlagMode((f) => !f)}>{flagMode ? `${t('btn.flag')}: ${t('flag.on')}` : `${t('btn.flag')}: ${t('flag.off')}`}</button>
           <button className="ms-btn" onClick={changeDifficulty}>{t('btn.difficulty')}</button>
