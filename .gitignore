@@ -106,7 +106,9 @@ dist
 
 # claude
 .claude/
-docs\superpowers\specs
+
+# superpowers docs
+docs/
 
 # Docusaurus cache and generated files
 .docusaurus
