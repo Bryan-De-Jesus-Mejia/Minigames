@@ -39,6 +39,7 @@ export function GameFrame({ gameName, onBack, leaderboardHref, children }: GameF
         <h1 className="game-title">{gameName}</h1>
         <div className="header-spacer">
           <div className="language-selector">
+            <UsernameInput />
             <button className={`lang-btn ${language === 'en' ? 'active' : ''}`} onClick={() => changeLang('en')}>EN</button>
             <button className={`lang-btn ${language === 'es' ? 'active' : ''}`} onClick={() => changeLang('es')}>ES</button>
             {leaderboardHref ? (
