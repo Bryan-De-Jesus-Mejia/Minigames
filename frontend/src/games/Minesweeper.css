@@ -395,6 +395,33 @@
   border-color: #00aa00;
 }
 
+.ms-overlay-rank {
+  font-size: 1.2rem;
+  margin-top: 6px;
+  opacity: 0.85;
+}
+
+.ms-leaderboard-separator {
+  text-align: center;
+  color: #555;
+  font-size: 0.9rem;
+  letter-spacing: 0.3em;
+  padding: 4px 0;
+}
+
+.ms-leaderboard-item-you {
+  border-color: #4a4a2a;
+  background: #2a2a1a;
+}
+
+.ms-leaderboard-item-you .ms-rank {
+  color: #f0c040;
+}
+
+.ms-leaderboard-item-you .ms-score-user {
+  color: #f0e080;
+}
+
 @media (max-width: 420px) {
   .ms-container {
     padding: 16px;

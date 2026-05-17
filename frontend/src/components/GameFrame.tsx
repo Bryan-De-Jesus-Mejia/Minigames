@@ -1,6 +1,7 @@
 import './GameFrame.css'
 import { useNavigate, useLocation } from 'react-router-dom'
 import { useLanguage } from '../context/LanguageContext'
+import { UsernameInput } from './UsernameInput'
 
 interface GameFrameProps {
   gameName: string

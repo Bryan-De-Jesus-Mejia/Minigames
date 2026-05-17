@@ -4,14 +4,20 @@ import { readLeaderboard, appendScore } from './_lib/sheets'
 
 export default async function handler(req: VercelRequest, res: VercelResponse) {
   if (req.method === 'GET') {
-    const { game, difficulty } = req.query
+    const { game, difficulty, username } = req.query
     if (typeof game !== 'string' || typeof difficulty !== 'string') {
       return res.status(400).json({ error: 'game and difficulty query params required' })
     }
     try {
-      const entries = await readLeaderboard(game, difficulty)
-      res.setHeader('Cache-Control', 'public, max-age=60, s-maxage=60')
-      return res.status(200).json({ entries })
+      const opts = typeof username === 'string' ? { username } : undefined
+      const result = await readLeaderboard(game, difficulty, opts)
+      // Skip cache when looking up a player's personal rank so it's always fresh
+      if (opts) {
+        res.setHeader('Cache-Control', 'no-store')
+      } else {
+        res.setHeader('Cache-Control', 'public, max-age=60, s-maxage=60')
+      }
+      return res.status(200).json(result)
     } catch (err) {
       console.error('readLeaderboard failed:', err)
       return res.status(500).json({ error: 'Failed to read leaderboard' })
@@ -37,8 +43,11 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     const date = new Date().toISOString()
     try {
       await appendScore(payload.game, payload.difficulty, safeUsername, time, date)
-      const entries = await readLeaderboard(payload.game, payload.difficulty)
-      return res.status(200).json({ entries })
+      const result = await readLeaderboard(payload.game, payload.difficulty, {
+        username: safeUsername,
+        submittedTime: time,
+      })
+      return res.status(200).json(result)
     } catch (err) {
       console.error('submit score failed:', err)
       return res.status(500).json({ error: 'Failed to submit score' })

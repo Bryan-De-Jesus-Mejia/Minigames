@@ -102,6 +102,8 @@ export default function Minesweeper() {
   const [scoreRecorded, setScoreRecorded] = useState(false)
   const [apiLeaderboard, setApiLeaderboard] = useState<LeaderboardEntry[] | null>(null)
   const [leaderboardLoading, setLeaderboardLoading] = useState(false)
+  const [playerRank, setPlayerRank] = useState<number | null>(null)
+  const [playerEntry, setPlayerEntry] = useState<LeaderboardEntry | null>(null)
   const gridRef = useRef<HTMLDivElement>(null)
   const sessionTokenRef = useRef<string | null>(null)
   const hasCustomUsername = () => {
@@ -131,6 +133,8 @@ export default function Minesweeper() {
         setScoreRecorded(false)
         sessionTokenRef.current = null
         setApiLeaderboard(null)
+        setPlayerRank(null)
+        setPlayerEntry(null)
         fetch('/api/game-session', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
@@ -153,15 +157,22 @@ export default function Minesweeper() {
       setScoreRecorded(false)
       sessionTokenRef.current = null
       setApiLeaderboard(null)
+      setPlayerRank(null)
+      setPlayerEntry(null)
     }
   }, [difficultyParam])
 
   useEffect(() => {
     if (!isLeaderboardPage || !difficulty) return
     setLeaderboardLoading(true)
-    fetch(`/api/leaderboard?game=minesweeper&difficulty=${difficulty.key}`)
+    const username = localStorage.getItem('minigames-username') ?? 'Player'
+    fetch(`/api/leaderboard?game=minesweeper&difficulty=${difficulty.key}&username=${encodeURIComponent(username)}`)
       .then((r) => r.json())
-      .then((data: { entries: LeaderboardEntry[] }) => setApiLeaderboard(data.entries))
+      .then((data: { entries: LeaderboardEntry[]; playerRank?: number; playerEntry?: LeaderboardEntry }) => {
+        setApiLeaderboard(data.entries)
+        if (data.playerRank !== undefined) setPlayerRank(data.playerRank)
+        if (data.playerEntry !== undefined) setPlayerEntry(data.playerEntry)
+      })
       .catch(() => setApiLeaderboard([]))
       .finally(() => setLeaderboardLoading(false))
   }, [isLeaderboardPage, difficulty?.key])
@@ -192,8 +203,10 @@ export default function Minesweeper() {
         }),
       })
       if (res.ok) {
-        const data = (await res.json()) as { entries: LeaderboardEntry[] }
+        const data = (await res.json()) as { entries: LeaderboardEntry[]; playerRank?: number; playerEntry?: LeaderboardEntry }
         setApiLeaderboard(data.entries)
+        if (data.playerRank !== undefined) setPlayerRank(data.playerRank)
+        if (data.playerEntry !== undefined) setPlayerEntry(data.playerEntry)
       }
     } catch {
       // score submission failed silently
@@ -364,6 +377,20 @@ export default function Minesweeper() {
               )
             })}
           </ol>
+        )}
+
+        {playerRank !== null && playerRank > 15 && playerEntry !== null && (
+          <>
+            <div className="ms-leaderboard-separator">· · ·</div>
+            <ol className="ms-leaderboard-list">
+              <li className="ms-leaderboard-item ms-leaderboard-item-you">
+                <span className="ms-rank">#{playerRank}</span>
+                <span className="ms-score-user">{playerEntry.username}</span>
+                <span className="ms-score-time">{formatTime(playerEntry.time)}</span>
+                <span className="ms-score-date">{new Date(playerEntry.date).toLocaleDateString()}</span>
+              </li>
+            </ol>
+          </>
         )}
       </div>
     )
@@ -577,7 +604,12 @@ export default function Minesweeper() {
       </div>
 
       {gameOver && <div className="ms-overlay">{t('game.over')}</div>}
-      {won && <div className="ms-overlay success">{t('game.win')} · {formatTime(elapsedTime)}</div>}
+      {won && (
+        <div className="ms-overlay success">
+          <div>{t('game.win')} · {formatTime(elapsedTime)}</div>
+          {playerRank !== null && <div className="ms-overlay-rank">#{playerRank}</div>}
+        </div>
+      )}
     </div>
   )
 
