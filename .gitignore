@@ -104,6 +104,10 @@ dist
 # vitepress cache directory
 **/.vitepress/cache
 
+# claude
+.claude/
+docs\superpowers\specs
+
 # Docusaurus cache and generated files
 .docusaurus
 
