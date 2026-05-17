@@ -76,7 +76,6 @@ function App() {
       <Route path="/:lang" element={<Menu />} />
       <Route path="/:lang/minesweeper" element={<Minesweeper />} />
       <Route path="/:lang/minesweeper/:difficulty" element={<Minesweeper />} />
-      <Route path="/:lang/minesweeper/:difficulty/leaderboard" element={<Minesweeper />} />
       <Route
         path="/:lang/:game"
         element={(

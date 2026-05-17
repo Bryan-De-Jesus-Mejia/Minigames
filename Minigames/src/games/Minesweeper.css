@@ -21,178 +21,6 @@
   padding: 20px;
 }
 
-.ms-leaderboard-page {
-  justify-content: center;
-  align-items: center;
-  overflow-y: auto;
-  overflow-x: hidden;
-  min-height: 0;
-  width: 100%;
-  position: relative;
-  -ms-overflow-style: none;
-  scrollbar-width: none;
-}
-
-.ms-leaderboard-card {
-  width: min(100%, 620px);
-  max-height: calc(100dvh - 170px);
-  overflow-y: auto;
-  overflow-x: hidden;
-  -ms-overflow-style: none;
-  scrollbar-width: none;
-}
-
-.ms-leaderboard-page::-webkit-scrollbar,
-.ms-leaderboard-card::-webkit-scrollbar {
-  width: 0;
-  height: 0;
-}
-
-.ms-leaderboard-meta {
-  margin-bottom: 14px;
-  color: #c8c8c8;
-  font-size: 0.92rem;
-}
-
-.ms-leaderboard-layout {
-  display: flex;
-  flex-direction: column;
-  gap: 16px;
-}
-
-.ms-podium {
-  display: flex;
-  width: 100%;
-  min-width: 0;
-  justify-content: space-between;
-  gap: 10px;
-  align-items: flex-end;
-}
-
-.ms-podium-slot {
-  display: flex;
-  flex: 1 1 0;
-  min-width: 0;
-  box-sizing: border-box;
-  flex-direction: column;
-  align-items: center;
-  justify-content: flex-end;
-  gap: 8px;
-  border: 1px solid #2a2a2a;
-  background: linear-gradient(180deg, #2a2a2a 0%, #1f1f1f 100%);
-  padding: 16px 12px;
-  text-align: center;
-}
-
-.ms-podium-1 {
-  min-height: 196px;
-  order: 2;
-  margin-bottom: 0;
-  border-color: #f1d08a;
-  background: linear-gradient(180deg, rgba(241, 208, 138, 0.22) 0%, rgba(31, 31, 31, 1) 100%);
-}
-
-.ms-podium-2 {
-  order: 1;
-  min-height: 182px;
-  border-color: #7d8793;
-}
-
-.ms-podium-3 {
-  order: 3;
-  min-height: 128px;
-  border-color: #b87333;
-}
-
-.ms-podium-place {
-  font-size: 1rem;
-  font-weight: 800;
-  letter-spacing: 0.08em;
-  text-transform: uppercase;
-}
-
-.ms-podium-username {
-  font-size: 0.92rem;
-  font-weight: 700;
-  color: #ececec;
-  max-width: 100%;
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
-}
-
-.ms-podium-time {
-  font-size: clamp(1rem, 2vw, 1.3rem);
-  font-weight: 800;
-  width: 100%;
-  max-width: 11ch;
-  text-align: center;
-  font-variant-numeric: tabular-nums;
-  font-feature-settings: 'tnum' 1;
-}
-
-.ms-podium-date {
-  width: 100%;
-  max-width: 10ch;
-  text-align: center;
-  color: #bcbcbc;
-  font-size: 0.82rem;
-  font-variant-numeric: tabular-nums;
-  font-feature-settings: 'tnum' 1;
-}
-
-.ms-leaderboard-list {
-  list-style: none;
-  margin: 0;
-  padding: 0;
-  display: grid;
-  gap: 8px;
-}
-
-.ms-leaderboard-item {
-  display: grid;
-  grid-template-columns: 56px minmax(0, 1fr) 11ch 10ch;
-  gap: 10px;
-  align-items: center;
-  border: 1px solid #2a2a2a;
-  background: #232323;
-  padding: 10px 12px;
-}
-
-.ms-rank {
-  color: #f1d08a;
-  font-weight: 700;
-}
-
-.ms-score-time {
-  font-weight: 700;
-  text-align: right;
-  font-variant-numeric: tabular-nums;
-  font-feature-settings: 'tnum' 1;
-}
-
-.ms-score-user {
-  color: #e8e8e8;
-  font-weight: 600;
-  min-width: 0;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-}
-
-.ms-score-date {
-  color: #bcbcbc;
-  font-size: 0.85rem;
-  text-align: right;
-  font-variant-numeric: tabular-nums;
-  font-feature-settings: 'tnum' 1;
-}
-
-.ms-leaderboard-empty {
-  color: #9f9f9f;
-  font-size: 0.95rem;
-}
-
 .ms-menu-title {
   font-size: clamp(1rem, 2.4vw, 1.6rem);
   font-weight: 700;
@@ -386,51 +214,10 @@
     padding: 16px;
   }
 
-  .ms-leaderboard-card {
-    max-height: calc(100dvh - 150px);
-  }
-
   .ms-menu-button {
     padding: 12px 14px;
   }
-
-  .ms-podium {
-    display: grid;
-    grid-template-columns: 1fr;
-  }
-
-  .ms-podium-slot {
-    min-height: 0;
-  }
-
-  .ms-podium-1,
-  .ms-podium-2,
-  .ms-podium-3 {
-    order: initial;
-  }
-
-  .ms-podium-1 {
-    min-height: 0;
-  }
-
-  .ms-podium-2 {
-    min-height: 0;
-  }
-
-  .ms-podium-3 {
-    min-height: 0;
-  }
-
-  .ms-leaderboard-item {
-    grid-template-columns: 48px minmax(0, 1fr);
-  }
-
-  .ms-score-time,
-  .ms-score-date {
-    grid-column: 1 / -1;
-  }
 }
-
 
 /* Larger screens: make header and board more prominent */
 @media (min-width: 1000px) {
@@ -439,8 +226,6 @@
   .ms-board.scrollable { max-height: calc(100vh - 160px); }
   .ms-grid { gap: 3px; }
   .ms-menu-card { width: 520px; }
-  .ms-podium { gap: 14px; }
-  .ms-leaderboard-card { max-height: calc(100dvh - 200px); }
 }
 
 @media (min-width: 1400px) {
