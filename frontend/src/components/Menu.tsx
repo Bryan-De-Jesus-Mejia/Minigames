@@ -3,6 +3,10 @@ import { useNavigate, useParams } from 'react-router-dom'
 import { useLanguage } from '../context/LanguageContext'
 import './Menu.css'
 import MinesweeperIcon from './icons/MinesweeperIcon'
+import GridIcon from './icons/GridIcon'
+import PlayIcon from './icons/PlayIcon'
+import KanbanIcon from './icons/KanbanIcon'
+import CloudIcon from './icons/CloudIcon'
 
 export function Menu() {
   const navigate = useNavigate()
@@ -12,10 +16,10 @@ export function Menu() {
 
   const games = [
     { id: 'minesweeper', name: t('minesweeper'), Icon: MinesweeperIcon },
-    { id: 'memory', name: t('memory'), icon: 'grid-3x3' },
-    { id: 'snake', name: t('snake'), icon: 'play' },
-    { id: 'tetris', name: t('tetris'), icon: 'kanban' },
-    { id: 'flappybird', name: t('flappybird'), icon: 'cloud' },
+    { id: 'memory', name: t('memory'), Icon: GridIcon },
+    { id: 'snake', name: t('snake'), Icon: PlayIcon },
+    { id: 'tetris', name: t('tetris'), Icon: KanbanIcon },
+    { id: 'flappybird', name: t('flappybird'), Icon: CloudIcon },
   ]
 
   const handleGameSelect = (gameId: string) => {
@@ -28,7 +32,7 @@ export function Menu() {
   }
 
   return (
-    <div className="menu-container">
+    <main className="menu-container">
       <div className="menu-header">
         <h1 className="menu-title">{t('menu.title')}</h1>
         <div className="menu-divider"></div>
@@ -57,15 +61,11 @@ export function Menu() {
             onMouseEnter={() => setHoveredGame(game.id)}
             onMouseLeave={() => setHoveredGame(null)}
           >
-            {('Icon' in game && game.Icon) ? (
-              <game.Icon className="game-icon" aria-hidden="true" />
-            ) : (
-              <i className={`bi bi-${(game as any).icon} game-icon`} />
-            )}
+            <game.Icon className="game-icon" aria-hidden="true" />
             <span className="game-name">{game.name}</span>
           </button>
         ))}
       </div>
-    </div>
+    </main>
   )
 }

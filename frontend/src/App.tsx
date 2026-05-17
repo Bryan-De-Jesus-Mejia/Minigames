@@ -1,11 +1,12 @@
-import React from 'react'
+import React, { lazy, Suspense } from 'react'
 import { Routes, Route, useNavigate, useParams, Navigate, useLocation } from 'react-router-dom'
 import { Menu } from './components/Menu'
 import { GameFrame } from './components/GameFrame'
 import { Placeholder } from './games/Placeholder'
-import Minesweeper from './games/Minesweeper'
 import { useLanguage } from './context/LanguageContext'
 import './App.css'
+
+const Minesweeper = lazy(() => import('./games/Minesweeper'))
 
 type Language = 'en' | 'es'
 
@@ -74,9 +75,9 @@ function App() {
     <Routes>
       <Route path="/" element={<Navigate to="/en" replace />} />
       <Route path="/:lang" element={<Menu />} />
-      <Route path="/:lang/minesweeper" element={<Minesweeper />} />
-      <Route path="/:lang/minesweeper/:difficulty" element={<Minesweeper />} />
-      <Route path="/:lang/minesweeper/:difficulty/leaderboard" element={<Minesweeper />} />
+      <Route path="/:lang/minesweeper" element={<Suspense fallback={null}><Minesweeper /></Suspense>} />
+      <Route path="/:lang/minesweeper/:difficulty" element={<Suspense fallback={null}><Minesweeper /></Suspense>} />
+      <Route path="/:lang/minesweeper/:difficulty/leaderboard" element={<Suspense fallback={null}><Minesweeper /></Suspense>} />
       <Route
         path="/:lang/:game"
         element={(
