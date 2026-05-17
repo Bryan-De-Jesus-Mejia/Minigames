@@ -2,6 +2,7 @@ import React, { useEffect, useState, useRef } from 'react'
 import { useParams, useNavigate, useLocation } from 'react-router-dom'
 import { GameFrame } from '../components/GameFrame'
 import { useLanguage } from '../context/LanguageContext'
+import { useUsername } from '../hooks/useUsername'
 import './Minesweeper.css'
 import FlagIcon from '../components/icons/FlagIcon'
 
@@ -37,85 +38,6 @@ type LeaderboardEntry = {
   date: string
 }
 
-type LeaderboardData = Record<DifficultyKey, LeaderboardEntry[]>
-
-const LEADERBOARD_STORAGE_KEY = 'minesweeper-leaderboard-v1'
-
-const createEmptyLeaderboard = (): LeaderboardData => ({
-  easy: [],
-  medium: [],
-  hard: [],
-})
-
-const createPlaceholderEntries = (baseTime: number, startDay: number): LeaderboardEntry[] => {
-  const names = [
-    'HexMiner',
-    'GridGhost',
-    'MineHunter',
-    'PixelFlag',
-    'ZeroCascade',
-    'SafeClick',
-    'BombProof',
-    'CornerCheck',
-    'FastReveal',
-    'LuckyTile',
-    'NoGuess',
-    'TileScout',
-    'FlagMaster',
-    'MineSense',
-    'ClearPath',
-  ]
-
-  return Array.from({ length: 15 }, (_, index) => ({
-    username: names[index % names.length],
-    time: Number((baseTime + index * 1.73 + (index % 3) * 0.11).toFixed(3)),
-    date: new Date(Date.UTC(2026, 4, Math.max(1, startDay - index), 12, 0, 0)).toISOString(),
-  }))
-}
-
-const PLACEHOLDER_LEADERBOARD: LeaderboardData = {
-  easy: createPlaceholderEntries(22.4, 15),
-  medium: createPlaceholderEntries(49.8, 15),
-  hard: createPlaceholderEntries(118.2, 15),
-}
-
-const loadLeaderboard = (): LeaderboardData => {
-  const fallback = createEmptyLeaderboard()
-
-  const normalizeEntries = (entries: unknown): LeaderboardEntry[] => {
-    if (!Array.isArray(entries)) return []
-
-    return entries
-      .filter((entry) => typeof entry === 'object' && entry !== null)
-      .map((entry) => {
-        const row = entry as Partial<LeaderboardEntry>
-        return {
-          username: typeof row.username === 'string' && row.username.trim().length > 0 ? row.username : 'You',
-          time: typeof row.time === 'number' ? row.time : 0,
-          date: typeof row.date === 'string' ? row.date : new Date().toISOString(),
-        }
-      })
-      .sort((a, b) => a.time - b.time)
-      .slice(0, 15)
-  }
-
-  try {
-    const raw = localStorage.getItem(LEADERBOARD_STORAGE_KEY)
-    if (!raw) return fallback
-
-    const parsed = JSON.parse(raw) as Partial<LeaderboardData>
-    const normalized = {
-      easy: normalizeEntries(parsed.easy),
-      medium: normalizeEntries(parsed.medium),
-      hard: normalizeEntries(parsed.hard),
-    }
-
-    localStorage.setItem(LEADERBOARD_STORAGE_KEY, JSON.stringify(normalized))
-    return normalized
-  } catch {
-    return fallback
-  }
-}
 
 function makeBoard(rows: number, cols: number, mines: number, exclude?: Set<number>): Cell[] {
   const total = rows * cols
@@ -169,6 +91,7 @@ export default function Minesweeper() {
   const navigate = useNavigate()
   const location = useLocation()
   const { t } = useLanguage()
+  const { username } = useUsername()
   const [difficulty, setDifficulty] = useState<Difficulty | null>(null)
   const [board, setBoard] = useState<Cell[]>([])
   const [gameOver, setGameOver] = useState(false)
@@ -177,9 +100,11 @@ export default function Minesweeper() {
   const [flagMode, setFlagMode] = useState(false)
   const [startTime, setStartTime] = useState<number | null>(null)
   const [elapsedTime, setElapsedTime] = useState(0)
-  const [leaderboard, setLeaderboard] = useState<LeaderboardData>(loadLeaderboard)
   const [scoreRecorded, setScoreRecorded] = useState(false)
+  const [apiLeaderboard, setApiLeaderboard] = useState<LeaderboardEntry[] | null>(null)
+  const [leaderboardLoading, setLeaderboardLoading] = useState(false)
   const gridRef = useRef<HTMLDivElement>(null)
+  const sessionTokenRef = useRef<string | null>(null)
   const flags = board.filter((cell) => cell.flagged).length
   const isLeaderboardPage = location.pathname.endsWith('/leaderboard')
   const getParentRoute = () => {
@@ -188,13 +113,11 @@ export default function Minesweeper() {
     return `/${parts.slice(0, -1).join('/')}`
   }
 
-  // Load difficulty from URL param on mount
   useEffect(() => {
     if (difficultyParam) {
       const selectedDifficulty = DIFFICULTIES.find((d) => d.key === difficultyParam)
       if (selectedDifficulty) {
         setDifficulty(selectedDifficulty)
-        // create an empty board first; place mines on first click to guarantee a safe first reveal
         setBoard(makeBoard(selectedDifficulty.rows, selectedDifficulty.cols, 0))
         setMinesPlaced(false)
         setGameOver(false)
@@ -202,18 +125,42 @@ export default function Minesweeper() {
         setStartTime(null)
         setElapsedTime(0)
         setScoreRecorded(false)
+        sessionTokenRef.current = null
+        setApiLeaderboard(null)
+        fetch('/api/game-session', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ game: 'minesweeper', difficulty: difficultyParam }),
+        })
+          .then((r) => r.json())
+          .then((data: { token: string }) => {
+            sessionTokenRef.current = data.token
+          })
+          .catch(() => {
+            // token unavailable; score won't be submitted
+          })
       }
     } else {
-      // Clear difficulty when no param
       setDifficulty(null)
       setBoard([])
       setGameOver(false)
       setWon(false)
       setMinesPlaced(false)
       setScoreRecorded(false)
+      sessionTokenRef.current = null
+      setApiLeaderboard(null)
     }
   }, [difficultyParam])
 
+  useEffect(() => {
+    if (!isLeaderboardPage || !difficulty) return
+    setLeaderboardLoading(true)
+    fetch(`/api/leaderboard?game=minesweeper&difficulty=${difficulty.key}`)
+      .then((r) => r.json())
+      .then((data: { entries: LeaderboardEntry[] }) => setApiLeaderboard(data.entries))
+      .catch(() => setApiLeaderboard([]))
+      .finally(() => setLeaderboardLoading(false))
+  }, [isLeaderboardPage, difficulty?.key])
 
   const flagAllUnflaggedMines = () => {
     setBoard((b) => b.map((c) => (c.isMine && !c.flagged ? { ...c, flagged: true } : c)))
@@ -226,26 +173,23 @@ export default function Minesweeper() {
     return `${String(minutes).padStart(2, '0')}:${String(seconds).padStart(2, '0')}.${String(milliseconds).padStart(3, '0')}`
   }
 
-  const recordWinTime = (time: number) => {
+  const recordWinTime = async (time: number) => {
     if (!difficulty || scoreRecorded || !minesPlaced) return
-
-    const entry: LeaderboardEntry = {
-      username: 'You',
-      time,
-      date: new Date().toISOString(),
-    }
-
-    setLeaderboard((prev) => {
-      const next = {
-        ...prev,
-        [difficulty.key]: [...prev[difficulty.key], entry]
-          .sort((a, b) => a.time - b.time)
-          .slice(0, 15),
-      }
-      localStorage.setItem(LEADERBOARD_STORAGE_KEY, JSON.stringify(next))
-      return next
-    })
     setScoreRecorded(true)
+    if (!sessionTokenRef.current) return
+    try {
+      const res = await fetch('/api/leaderboard', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ token: sessionTokenRef.current, username, time }),
+      })
+      if (res.ok) {
+        const data = (await res.json()) as { entries: LeaderboardEntry[] }
+        setApiLeaderboard(data.entries)
+      }
+    } catch {
+      // score submission failed silently
+    }
   }
 
   const toggleFlagAt = (r: number, c: number) => {
@@ -344,10 +288,9 @@ export default function Minesweeper() {
     if (!difficulty) return
     const unrevealedSafeCells = board.filter((c) => !c.revealed && !c.isMine).length
     if (!gameOver && !won && unrevealedSafeCells === 0 && board.length > 0) {
-      recordWinTime(elapsedTime)
       setWon(true)
-      // Auto-flag all unflagged mines on win
       flagAllUnflaggedMines()
+      void recordWinTime(elapsedTime)
     }
   }, [board, gameOver, difficulty, won, elapsedTime, minesPlaced, scoreRecorded])
 
@@ -368,8 +311,11 @@ export default function Minesweeper() {
      navigate(`/${lang}/minesweeper`)
   }
 
-  const renderLeaderboardEntries = (entries: LeaderboardEntry[]) => {
-    const displayEntries = entries.length > 0 ? entries : PLACEHOLDER_LEADERBOARD[difficulty.key]
+  const renderLeaderboardEntries = () => {
+    if (leaderboardLoading) {
+      return <div className="ms-leaderboard-empty">Loading...</div>
+    }
+    const displayEntries = apiLeaderboard ?? []
     const podiumEntries = displayEntries.slice(0, 3)
     const listEntries = displayEntries.slice(3, 15)
 
@@ -383,7 +329,7 @@ export default function Minesweeper() {
               const place = index + 1
               return (
                 <div
-                  key={`${difficulty.key}-${entry.time}-${entry.date}`}
+                  key={`${difficulty!.key}-${entry.time}-${entry.date}`}
                   className={`ms-podium-slot ms-podium-${place}`}
                 >
                   <div className="ms-podium-place">#{place}</div>
@@ -401,7 +347,7 @@ export default function Minesweeper() {
             {listEntries.map((entry, index) => {
               const place = index + 4
               return (
-                <li key={`${difficulty.key}-${entry.time}-${entry.date}`} className="ms-leaderboard-item">
+                <li key={`${difficulty!.key}-${entry.time}-${entry.date}`} className="ms-leaderboard-item">
                   <span className="ms-rank">#{place}</span>
                   <span className="ms-score-user">{entry.username}</span>
                   <span className="ms-score-time">{formatTime(entry.time)}</span>
@@ -488,6 +434,19 @@ export default function Minesweeper() {
     setStartTime(null)
     setElapsedTime(0)
     setScoreRecorded(false)
+    sessionTokenRef.current = null
+    fetch('/api/game-session', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ game: 'minesweeper', difficulty: difficulty.key }),
+    })
+      .then((r) => r.json())
+      .then((data: { token: string }) => {
+        sessionTokenRef.current = data.token
+      })
+      .catch(() => {
+        // token unavailable; score won't be submitted
+      })
   }
 
   if (!difficulty) {
@@ -515,8 +474,6 @@ export default function Minesweeper() {
     )
   }
 
-  const leaderboardEntries = leaderboard[difficulty.key]
-
   if (isLeaderboardPage) {
     return (
       <GameFrame
@@ -532,7 +489,7 @@ export default function Minesweeper() {
             <div className="ms-leaderboard-meta">
               {difficulty.rows}x{difficulty.cols} · {difficulty.mines} mines
             </div>
-            {renderLeaderboardEntries(leaderboardEntries)}
+            {renderLeaderboardEntries()}
           </div>
         </div>
       </GameFrame>
