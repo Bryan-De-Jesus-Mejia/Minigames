@@ -23,10 +23,10 @@ export function verifyToken(token: string): TokenPayload | null {
   const payloadB64 = token.slice(0, dotIdx)
   const sig = token.slice(dotIdx + 1)
   const expectedSig = createHmac('sha256', secret).update(payloadB64).digest('base64url')
-  const sigBuf = Buffer.from(sig)
-  const expectedBuf = Buffer.from(expectedSig)
-  if (sigBuf.length !== expectedBuf.length) return null
-  if (!timingSafeEqual(sigBuf, expectedBuf)) return null
+  const sigBytes = Uint8Array.from(Buffer.from(sig))
+  const expectedBytes = Uint8Array.from(Buffer.from(expectedSig))
+  if (sigBytes.length !== expectedBytes.length) return null
+  if (!timingSafeEqual(sigBytes, expectedBytes)) return null
   try {
     const payload = JSON.parse(
       Buffer.from(payloadB64, 'base64url').toString(),
