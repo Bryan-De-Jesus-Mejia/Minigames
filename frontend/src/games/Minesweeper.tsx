@@ -323,11 +323,6 @@ export default function Minesweeper() {
      navigate(`/${lang}/minesweeper/${nextDifficulty.key}`)
   }
 
-  const backToGame = () => {
-    if (!difficulty) return
-    navigate(`/${lang}/minesweeper/${difficulty.key}`)
-  }
-
   const changeDifficulty = () => {
      navigate(`/${lang}/minesweeper`)
   }
