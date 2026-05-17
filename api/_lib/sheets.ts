@@ -25,7 +25,7 @@ export interface LeaderboardResult {
 export async function readLeaderboard(
   game: string,
   difficulty: string,
-  options?: { username?: string; submittedTime?: number },
+  options?: { username?: string },
 ): Promise<LeaderboardResult> {
   const auth = getAuth()
   const sheets = google.sheets({ version: 'v4', auth })
@@ -34,7 +34,8 @@ export async function readLeaderboard(
     range: `${game}-${difficulty}!A2:C`,
   })
   const rows = response.data.values ?? []
-  const all = rows
+
+  const parsed = rows
     .filter((row) => row[0] && row[1])
     .map((row) => ({
       username: String(row[0]),
@@ -42,31 +43,25 @@ export async function readLeaderboard(
       date: String(row[2] ?? new Date().toISOString()),
     }))
     .filter((entry) => !isNaN(entry.time))
-    .sort((a, b) => a.time - b.time)
 
+  // Keep only each player's personal best
+  const bestByUser = new Map<string, LeaderboardEntry>()
+  for (const entry of parsed) {
+    const existing = bestByUser.get(entry.username)
+    if (!existing || entry.time < existing.time) {
+      bestByUser.set(entry.username, entry)
+    }
+  }
+
+  const all = Array.from(bestByUser.values()).sort((a, b) => a.time - b.time)
   const entries = all.slice(0, 15)
 
   if (!options?.username) return { entries }
 
-  let playerEntry: LeaderboardEntry | undefined
-  let playerRank: number | undefined
+  const idx = all.findIndex((e) => e.username === options.username)
+  if (idx === -1) return { entries }
 
-  if (options.submittedTime !== undefined) {
-    // Rank = how many entries beat this time + 1
-    playerRank = all.filter((e) => e.time < options.submittedTime!).length + 1
-    playerEntry = all.find(
-      (e) => e.username === options.username && e.time === options.submittedTime,
-    ) ?? { username: options.username, time: options.submittedTime, date: new Date().toISOString() }
-  } else {
-    // Best entry for this username
-    const idx = all.findIndex((e) => e.username === options.username)
-    if (idx !== -1) {
-      playerRank = idx + 1
-      playerEntry = all[idx]
-    }
-  }
-
-  return { entries, playerRank, playerEntry }
+  return { entries, playerRank: idx + 1, playerEntry: all[idx] }
 }
 
 export async function appendScore(
