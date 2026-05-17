@@ -1,8 +1,8 @@
 {
   "scripts": {
-    "dev": "cd Minigames && npm run dev",
-    "build": "cd Minigames && npm run build",
-    "install": "cd Minigames && npm install",
+    "dev": "cd frontend && npm run dev",
+    "build": "cd frontend && npm run build",
+    "install": "cd frontend && npm install",
     "deploy": "vercel --prod"
   },
   "dependencies": {

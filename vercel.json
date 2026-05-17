@@ -1,6 +1,6 @@
 {
   "buildCommand": "npm run build",
-  "outputDirectory": "Minigames/dist",
+  "outputDirectory": "frontend/dist",
   "framework": "vite",
   "env": {},
   "routes": [
