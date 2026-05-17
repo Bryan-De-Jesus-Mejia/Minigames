@@ -61,6 +61,35 @@
   align-items: center;
 }
 
+.leaderboard-trophy-button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 38px;
+  height: 38px;
+  border: 1px solid #2a2a2a;
+  border-radius: 6px;
+  background: #222222;
+  color: #f1d08a;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.leaderboard-trophy-button:hover {
+  border-color: #3a3a3a;
+  background: #2a2a2a;
+  color: #ffd700;
+}
+
+.leaderboard-trophy-button:active {
+  background: #1f1f1f;
+}
+
+.leaderboard-trophy-button i {
+  font-size: 1rem;
+  line-height: 1;
+}
+
 .game-content {
   flex: 1;
   display: flex;

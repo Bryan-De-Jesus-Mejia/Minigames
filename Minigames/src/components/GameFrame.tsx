@@ -5,10 +5,11 @@ import { useLanguage } from '../context/LanguageContext'
 interface GameFrameProps {
   gameName: string
   onBack: () => void
+  leaderboardHref?: string
   children: React.ReactNode
 }
 
-export function GameFrame({ gameName, onBack, children }: GameFrameProps) {
+export function GameFrame({ gameName, onBack, leaderboardHref, children }: GameFrameProps) {
   const navigate = useNavigate()
   const location = useLocation()
   const { language, setLanguage, t } = useLanguage()
@@ -20,6 +21,11 @@ export function GameFrame({ gameName, onBack, children }: GameFrameProps) {
     const next = parts.join('/') || `/${newLang}`
     setLanguage(newLang as 'en' | 'es')
     navigate(next)
+  }
+
+  const openLeaderboard = () => {
+    if (!leaderboardHref) return
+    navigate(leaderboardHref)
   }
 
   return (
@@ -34,6 +40,17 @@ export function GameFrame({ gameName, onBack, children }: GameFrameProps) {
           <div className="language-selector">
             <button className={`lang-btn ${language === 'en' ? 'active' : ''}`} onClick={() => changeLang('en')}>EN</button>
             <button className={`lang-btn ${language === 'es' ? 'active' : ''}`} onClick={() => changeLang('es')}>ES</button>
+            {leaderboardHref ? (
+              <button
+                className="leaderboard-trophy-button"
+                onClick={openLeaderboard}
+                type="button"
+                aria-label={t('leaderboard.title')}
+                title={t('leaderboard.title')}
+              >
+                <i className="bi bi-trophy-fill" aria-hidden="true"></i>
+              </button>
+            ) : null}
           </div>
         </div>
       </div>
