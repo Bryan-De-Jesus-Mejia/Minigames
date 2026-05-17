@@ -8,7 +8,8 @@ export interface TokenPayload {
 }
 
 export function signToken(payload: TokenPayload): string {
-  const secret = process.env.HMAC_SECRET!
+  const secret = process.env.HMAC_SECRET
+  if (!secret) throw new Error('HMAC_SECRET environment variable is not set')
   const payloadB64 = Buffer.from(JSON.stringify(payload)).toString('base64url')
   const sig = createHmac('sha256', secret).update(payloadB64).digest('base64url')
   return `${payloadB64}.${sig}`

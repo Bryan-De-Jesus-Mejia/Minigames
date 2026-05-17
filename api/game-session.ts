@@ -10,6 +10,11 @@ export default function handler(req: VercelRequest, res: VercelResponse) {
   if (typeof game !== 'string' || typeof difficulty !== 'string') {
     return res.status(400).json({ error: 'game and difficulty are required' })
   }
+  const VALID_GAMES = ['minesweeper']
+  const VALID_DIFFICULTIES = ['easy', 'medium', 'hard']
+  if (!VALID_GAMES.includes(game) || !VALID_DIFFICULTIES.includes(difficulty)) {
+    return res.status(400).json({ error: 'Invalid game or difficulty' })
+  }
   const token = signToken({
     game,
     difficulty,

@@ -2,7 +2,6 @@ import React, { useEffect, useState, useRef } from 'react'
 import { useParams, useNavigate, useLocation } from 'react-router-dom'
 import { GameFrame } from '../components/GameFrame'
 import { useLanguage } from '../context/LanguageContext'
-import { useUsername } from '../hooks/useUsername'
 import './Minesweeper.css'
 import FlagIcon from '../components/icons/FlagIcon'
 
@@ -91,7 +90,6 @@ export default function Minesweeper() {
   const navigate = useNavigate()
   const location = useLocation()
   const { t } = useLanguage()
-  const { username } = useUsername()
   const [difficulty, setDifficulty] = useState<Difficulty | null>(null)
   const [board, setBoard] = useState<Cell[]>([])
   const [gameOver, setGameOver] = useState(false)
@@ -181,7 +179,11 @@ export default function Minesweeper() {
       const res = await fetch('/api/leaderboard', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ token: sessionTokenRef.current, username, time }),
+        body: JSON.stringify({
+          token: sessionTokenRef.current,
+          username: localStorage.getItem('minigames-username') ?? 'Player',
+          time,
+        }),
       })
       if (res.ok) {
         const data = (await res.json()) as { entries: LeaderboardEntry[] }
