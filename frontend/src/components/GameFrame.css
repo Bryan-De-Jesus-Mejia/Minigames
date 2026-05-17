@@ -118,3 +118,43 @@
     font-size: 0.9rem;
   }
 }
+
+.username-display {
+  background: transparent;
+  border: 1px solid #2a2a2a;
+  color: #aaaaaa;
+  padding: 6px 10px;
+  cursor: pointer;
+  font-size: 0.8rem;
+  border-radius: 4px;
+  max-width: 90px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  transition: all 0.2s ease;
+}
+
+.username-display:hover {
+  border-color: #3a3a3a;
+  background: #2a2a2a;
+  color: #ffffff;
+}
+
+.username-form {
+  display: flex;
+}
+
+.username-input {
+  background: #2a2a2a;
+  border: 1px solid #3a3a3a;
+  color: #ffffff;
+  padding: 6px 10px;
+  font-size: 0.8rem;
+  border-radius: 4px;
+  width: 90px;
+  outline: none;
+}
+
+.username-input:focus {
+  border-color: #555555;
+}
