@@ -1,9 +1,9 @@
 {
   "buildCommand": "npm run build",
   "outputDirectory": "frontend/dist",
+  "devCommand": "cd frontend && npm run dev -- --port $PORT",
   "framework": "vite",
-  "env": {},
-  "routes": [
+"routes": [
     {
       "src": "^/(?!api/)(?!.*\\.).*$",
       "dest": "/index.html"

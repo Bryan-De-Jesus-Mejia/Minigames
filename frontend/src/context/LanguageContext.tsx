@@ -37,6 +37,8 @@ const translations: Record<Language, Record<string, string>> = {
     'leaderboard.view': 'Leaderboard',
     'leaderboard.back': 'Back to game',
     'leaderboard.podium': 'Podium',
+    'username.notice': 'Set a player name so your scores are saved to the leaderboard.',
+    'username.label': 'Player name',
   },
   es: {
     'menu.title': 'MINIGAMES',
@@ -63,6 +65,8 @@ const translations: Record<Language, Record<string, string>> = {
     'leaderboard.view': 'Clasificacion',
     'leaderboard.back': 'Volver al juego',
     'leaderboard.podium': 'Podio',
+    'username.notice': 'Establece un nombre para que tus puntajes sean guardados en el marcador.',
+    'username.label': 'Nombre de jugador',
   },
   
 }

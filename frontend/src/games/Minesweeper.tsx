@@ -2,6 +2,7 @@ import React, { useEffect, useState, useRef } from 'react'
 import { useParams, useNavigate, useLocation } from 'react-router-dom'
 import { GameFrame } from '../components/GameFrame'
 import { useLanguage } from '../context/LanguageContext'
+import { UsernameInput } from '../components/UsernameInput'
 import './Minesweeper.css'
 import FlagIcon from '../components/icons/FlagIcon'
 
@@ -103,6 +104,11 @@ export default function Minesweeper() {
   const [leaderboardLoading, setLeaderboardLoading] = useState(false)
   const gridRef = useRef<HTMLDivElement>(null)
   const sessionTokenRef = useRef<string | null>(null)
+  const hasCustomUsername = () => {
+    const stored = localStorage.getItem('minigames-username')
+    return stored !== null && stored !== 'Player'
+  }
+  const [noticeDismissed, setNoticeDismissed] = useState(false)
   const flags = board.filter((cell) => cell.flagged).length
   const isLeaderboardPage = location.pathname.endsWith('/leaderboard')
   const getParentRoute = () => {
@@ -457,6 +463,10 @@ export default function Minesweeper() {
         <div className="ms-container ms-menu">
           <div className="ms-menu-card">
             <div className="ms-menu-title">{t('difficulty.choose')}</div>
+            <div className="ms-menu-username">
+              <span className="ms-menu-username-label">{t('username.label')}</span>
+              <UsernameInput />
+            </div>
             <div className="ms-menu-list">
               {DIFFICULTIES.map((option) => (
                 <button
@@ -500,6 +510,12 @@ export default function Minesweeper() {
 
   const gameContent = (
     <div className="ms-container">
+      {!noticeDismissed && !hasCustomUsername() && (
+        <div className="ms-username-notice">
+          <span>{t('username.notice')}</span>
+          <button className="ms-notice-dismiss" onClick={() => setNoticeDismissed(true)} type="button" aria-label="Dismiss">✕</button>
+        </div>
+      )}
       <div className="ms-header">
         <div className="ms-info">{t(`difficulty.${difficulty.key}`)} · {difficulty.rows}x{difficulty.cols} · {t('btn.flag')}: {difficulty.mines - flags} · {t('btn.timer')}: <span className="ms-timer">{formatTime(elapsedTime)}</span></div>
         <div className="ms-controls">

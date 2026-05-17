@@ -201,6 +201,38 @@
   margin-bottom: 16px;
 }
 
+.ms-menu-username {
+  margin-bottom: 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.ms-menu-username-label {
+  font-size: 0.78rem;
+  color: #9f9f9f;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+}
+
+.ms-menu-username .username-display {
+  max-width: 100%;
+  width: 100%;
+  text-align: left;
+  font-size: 0.95rem;
+  padding: 10px 14px;
+}
+
+.ms-menu-username .username-input {
+  width: 100%;
+  font-size: 0.95rem;
+  padding: 10px 14px;
+}
+
+.ms-menu-username .username-form {
+  width: 100%;
+}
+
 .ms-menu-list {
   display: flex;
   flex-direction: column;
@@ -447,4 +479,35 @@
   .ms-container { padding: 56px 120px; }
   .ms-header { max-width: 1400px; }
   .ms-grid { gap: 4px; }
+}
+
+.ms-username-notice {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  background: #2a2000;
+  border: 1px solid #554400;
+  color: #f0c040;
+  padding: 8px 14px;
+  font-size: 0.82rem;
+  margin-bottom: 8px;
+  border-radius: 4px;
+}
+
+.ms-notice-dismiss {
+  background: transparent;
+  border: none;
+  color: #f0c040;
+  cursor: pointer;
+  font-size: 0.9rem;
+  padding: 0 2px;
+  line-height: 1;
+  flex-shrink: 0;
+  opacity: 0.7;
+}
+
+.ms-notice-dismiss:hover {
+  opacity: 1;
 }
