@@ -3,7 +3,23 @@
   "outputDirectory": "frontend/dist",
   "devCommand": "cd frontend && npm run dev -- --port $PORT",
   "framework": "vite",
-"routes": [
+  "headers": [
+    {
+      "source": "/sitemap.xml",
+      "headers": [
+        { "key": "Content-Type", "value": "application/xml; charset=utf-8" },
+        { "key": "Cache-Control", "value": "public, max-age=86400" }
+      ]
+    },
+    {
+      "source": "/robots.txt",
+      "headers": [
+        { "key": "Content-Type", "value": "text/plain; charset=utf-8" },
+        { "key": "Cache-Control", "value": "public, max-age=86400" }
+      ]
+    }
+  ],
+  "routes": [
     {
       "src": "^/(?!api/)(?!.*\\.).*$",
       "dest": "/index.html"
