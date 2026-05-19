@@ -88,6 +88,7 @@ export default function Memory() {
   const [playerEntry, setPlayerEntry] = useState<LeaderboardEntry | null>(null)
   const [noticeDismissed, setNoticeDismissed] = useState(false)
   const sessionTokenRef = useRef<string | null>(null)
+  const gameIdRef = useRef(0)
 
   const difficulty = DIFFICULTIES.find(d => d.key === difficultyParam) ?? null
   const isLeaderboardPage = location.pathname.endsWith('/leaderboard')
@@ -104,6 +105,7 @@ export default function Memory() {
   }
 
   function startNewGame(diff: DifficultyConfig) {
+    gameIdRef.current += 1
     setCards(buildDeck(diff.pairs))
     setPhase('idle')
     setFirstFlipId(null)
@@ -164,15 +166,6 @@ export default function Memory() {
     return () => clearInterval(interval)
   }, [startTime, phase])
 
-  useEffect(() => {
-    if (phase === 'won' || cards.length === 0) return
-    if (cards.every(c => c.matched)) {
-      const finalTime = startTime ? (Date.now() - startTime) / 1000 : elapsedTime
-      setPhase('won')
-      void recordWinTime(finalTime)
-    }
-  }, [cards])
-
   async function recordWinTime(time: number) {
     if (scoreRecorded || !sessionTokenRef.current || !difficulty) return
     setScoreRecorded(true)
@@ -196,8 +189,17 @@ export default function Memory() {
         if (data.playerRank !== undefined) setPlayerRank(data.playerRank)
         if (data.playerEntry !== undefined) setPlayerEntry(data.playerEntry)
       }
-    } catch {}
+    } catch { /* score submission failed silently */ }
   }
+
+  useEffect(() => {
+    if (phase === 'won' || cards.length === 0) return
+    if (cards.every(c => c.matched)) {
+      const finalTime = startTime ? (Date.now() - startTime) / 1000 : elapsedTime
+      setPhase('won')
+      void recordWinTime(finalTime)
+    }
+  }, [cards])
 
   function handleCardClick(id: number) {
     if (phase === 'locked' || phase === 'won') return
@@ -227,7 +229,9 @@ export default function Memory() {
       ))
       setPhase('playing')
     } else {
+      const capturedGameId = gameIdRef.current
       setTimeout(() => {
+        if (gameIdRef.current !== capturedGameId) return
         setCards(prev => prev.map(c =>
           c.id === fId || c.id === id ? { ...c, flipped: false } : c
         ))
