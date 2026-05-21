@@ -377,7 +377,9 @@
 
 .ms-overlay {
   position: fixed;
-  inset: 0;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
   background: rgba(0,0,0,0.9);
   color: #fff;
   padding: 24px 32px;
@@ -386,9 +388,6 @@
   font-weight: 700;
   text-align: center;
   z-index: 1000;
-  display: flex;
-  align-items: center;
-  justify-content: center;
 }
 
 .ms-overlay.success {
