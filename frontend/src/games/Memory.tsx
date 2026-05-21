@@ -242,7 +242,12 @@ export default function Memory() {
 
   function renderLeaderboard() {
     if (leaderboardLoading) {
-      return <div className="mem-leaderboard-empty">Loading...</div>
+      return (
+        <div className="mem-leaderboard-loading" role="status" aria-live="polite">
+          <span className="mem-loading-spinner" aria-hidden="true" />
+          <span>{t('leaderboard.calculatingPlace')}</span>
+        </div>
+      )
     }
     const entries = apiLeaderboard ?? []
     const podiumEntries = entries.slice(0, 3)
