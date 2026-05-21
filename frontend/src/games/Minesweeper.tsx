@@ -100,6 +100,7 @@ export default function Minesweeper() {
   const [startTime, setStartTime] = useState<number | null>(null)
   const [elapsedTime, setElapsedTime] = useState(0)
   const [scoreRecorded, setScoreRecorded] = useState(false)
+  const [leaderboardPending, setLeaderboardPending] = useState(false)
   const [apiLeaderboard, setApiLeaderboard] = useState<LeaderboardEntry[] | null>(null)
   const [leaderboardLoading, setLeaderboardLoading] = useState(false)
   const [playerRank, setPlayerRank] = useState<number | null>(null)
@@ -131,6 +132,7 @@ export default function Minesweeper() {
         setStartTime(null)
         setElapsedTime(0)
         setScoreRecorded(false)
+        setLeaderboardPending(false)
         sessionTokenRef.current = null
         setApiLeaderboard(null)
         setPlayerRank(null)
@@ -155,6 +157,7 @@ export default function Minesweeper() {
       setWon(false)
       setMinesPlaced(false)
       setScoreRecorded(false)
+      setLeaderboardPending(false)
       sessionTokenRef.current = null
       setApiLeaderboard(null)
       setPlayerRank(null)
@@ -192,6 +195,7 @@ export default function Minesweeper() {
     if (!difficulty || scoreRecorded || !minesPlaced) return
     setScoreRecorded(true)
     if (!sessionTokenRef.current) return
+    setLeaderboardPending(true)
     try {
       const res = await fetch('/api/leaderboard', {
         method: 'POST',
@@ -210,6 +214,8 @@ export default function Minesweeper() {
       }
     } catch {
       // score submission failed silently
+    } finally {
+      setLeaderboardPending(false)
     }
   }
 
@@ -600,9 +606,16 @@ export default function Minesweeper() {
 
       {gameOver && <div className="ms-overlay">{t('game.over')}</div>}
       {won && (
-        <div className="ms-overlay success">
+        <div className="ms-overlay success ms-overlay-blocking" aria-live="polite">
           <div>{t('game.win')} · {formatTime(elapsedTime)}</div>
-          {playerRank !== null && <div className="ms-overlay-rank">#{playerRank}</div>}
+          {leaderboardPending ? (
+            <div className="ms-overlay-loading">
+              <span className="ms-loading-spinner" aria-hidden="true" />
+              <span>{t('leaderboard.calculatingPlace')}</span>
+            </div>
+          ) : playerRank !== null ? (
+            <div className="ms-overlay-rank">#{playerRank}</div>
+          ) : null}
         </div>
       )}
     </div>

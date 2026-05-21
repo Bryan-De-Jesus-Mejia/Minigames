@@ -82,6 +82,7 @@ export default function Memory() {
   const [startTime, setStartTime] = useState<number | null>(null)
   const [elapsedTime, setElapsedTime] = useState(0)
   const [scoreRecorded, setScoreRecorded] = useState(false)
+  const [leaderboardPending, setLeaderboardPending] = useState(false)
   const [apiLeaderboard, setApiLeaderboard] = useState<LeaderboardEntry[] | null>(null)
   const [leaderboardLoading, setLeaderboardLoading] = useState(false)
   const [playerRank, setPlayerRank] = useState<number | null>(null)
@@ -112,6 +113,7 @@ export default function Memory() {
     setStartTime(null)
     setElapsedTime(0)
     setScoreRecorded(false)
+    setLeaderboardPending(false)
     setApiLeaderboard(null)
     setPlayerRank(null)
     setPlayerEntry(null)
@@ -134,6 +136,7 @@ export default function Memory() {
       setStartTime(null)
       setElapsedTime(0)
       setScoreRecorded(false)
+      setLeaderboardPending(false)
       sessionTokenRef.current = null
       setApiLeaderboard(null)
       setPlayerRank(null)
@@ -169,6 +172,7 @@ export default function Memory() {
   async function recordWinTime(time: number) {
     if (scoreRecorded || !sessionTokenRef.current || !difficulty) return
     setScoreRecorded(true)
+    setLeaderboardPending(true)
     try {
       const res = await fetch('/api/leaderboard', {
         method: 'POST',
@@ -190,6 +194,9 @@ export default function Memory() {
         if (data.playerEntry !== undefined) setPlayerEntry(data.playerEntry)
       }
     } catch { /* score submission failed silently */ }
+    finally {
+      setLeaderboardPending(false)
+    }
   }
 
   useEffect(() => {
@@ -443,9 +450,16 @@ export default function Memory() {
         </div>
 
         {phase === 'won' && (
-          <div className="mem-overlay success">
+          <div className="mem-overlay success mem-overlay-blocking" aria-live="polite">
             <div>{t('game.win')} · {formatTime(elapsedTime)}</div>
-            {playerRank !== null && <div className="mem-overlay-rank">#{playerRank}</div>}
+            {leaderboardPending ? (
+              <div className="mem-overlay-loading">
+                <span className="mem-loading-spinner" aria-hidden="true" />
+                <span>{t('leaderboard.calculatingPlace')}</span>
+              </div>
+            ) : playerRank !== null ? (
+              <div className="mem-overlay-rank">#{playerRank}</div>
+            ) : null}
           </div>
         )}
       </div>

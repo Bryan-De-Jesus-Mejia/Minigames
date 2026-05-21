@@ -219,9 +219,7 @@
 
 .mem-overlay {
   position: fixed;
-  top: 50%;
-  left: 50%;
-  transform: translate(-50%, -50%);
+  inset: 0;
   background: rgba(0,0,0,0.9);
   color: #fff;
   padding: 24px 32px;
@@ -230,11 +228,28 @@
   font-weight: 700;
   text-align: center;
   z-index: 1000;
+  display: flex;
+  align-items: center;
+  justify-content: center;
 }
 
 .mem-overlay.success {
   background: rgba(0,120,0,0.9);
   border-color: #00aa00;
+}
+
+.mem-overlay-blocking {
+  pointer-events: all;
+}
+
+.mem-overlay-loading {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  margin-top: 8px;
+  font-size: 1rem;
+  opacity: 0.9;
 }
 
 .mem-overlay-rank {
