@@ -16,7 +16,7 @@ type DifficultyConfig = {
 }
 
 const DIFFICULTIES: DifficultyConfig[] = [
-  { key: 'easy',   rows: 4, cols: 4, pairs: 8,  cellSize: 90 },
+  { key: 'easy',   rows: 4, cols: 4, pairs: 8,  cellSize: 96 },
   { key: 'medium', rows: 5, cols: 6, pairs: 15, cellSize: 80 },
   { key: 'hard',   rows: 7, cols: 8, pairs: 28, cellSize: 70 },
 ]
@@ -326,7 +326,7 @@ export default function Memory() {
                   type="button"
                 >
                   <span>{t(`difficulty.${d.key}`)}</span>
-                  <span>{d.cols}×{d.rows} · {d.pairs} {t('memory.pairs')}</span>
+                  <span>{d.cols}×{d.rows}</span>
                 </button>
               ))}
             </div>
@@ -438,27 +438,9 @@ export default function Memory() {
         </div>
 
         {phase === 'won' && (
-          <div className="mem-overlay">
-            <div>{t('memory.won')} · {formatTime(elapsedTime)}</div>
-            {playerRank !== null && (
-              <div className="mem-overlay-rank">#{playerRank}</div>
-            )}
-            <div className="mem-overlay-actions">
-              <button
-                className="mem-overlay-btn"
-                onClick={() => startNewGame(difficulty)}
-                type="button"
-              >
-                {t('memory.newGame')}
-              </button>
-              <button
-                className="mem-overlay-btn"
-                onClick={() => navigate(`/${lang}/memory/${difficulty.key}/leaderboard`)}
-                type="button"
-              >
-                {t('leaderboard.view')}
-              </button>
-            </div>
+          <div className="mem-overlay success">
+            <div>{t('game.win')} · {formatTime(elapsedTime)}</div>
+            {playerRank !== null && <div className="mem-overlay-rank">#{playerRank}</div>}
           </div>
         )}
       </div>

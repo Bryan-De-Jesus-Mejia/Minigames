@@ -99,15 +99,16 @@
 .mem-header {
   width: 100%;
   display: flex;
+  flex-direction: column;
   justify-content: center;
   align-items: center;
   gap: 12px;
-  flex-wrap: wrap;
 }
 
 .mem-info {
   font-weight: 600;
   font-size: clamp(0.9rem, 1.2vw, 1.05rem);
+  text-align: center;
 }
 
 .mem-timer {
@@ -121,6 +122,8 @@
 .mem-controls {
   display: flex;
   gap: 8px;
+  justify-content: center;
+  flex-wrap: wrap;
 }
 
 .mem-btn {
@@ -129,7 +132,6 @@
   color: #fff;
   padding: 6px 10px;
   cursor: pointer;
-  font-size: 0.9rem;
 }
 
 .mem-btn:hover {
@@ -220,42 +222,25 @@
   top: 50%;
   left: 50%;
   transform: translate(-50%, -50%);
-  background: rgba(0, 100, 0, 0.93);
+  background: rgba(0,0,0,0.9);
   color: #fff;
   padding: 24px 32px;
-  border: 2px solid #00aa00;
-  font-size: clamp(1.2rem, 2vw, 1.8rem);
+  border: 2px solid #2a2a2a;
+  font-size: 2rem;
   font-weight: 700;
   text-align: center;
   z-index: 1000;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 12px;
+}
+
+.mem-overlay.success {
+  background: rgba(0,120,0,0.9);
+  border-color: #00aa00;
 }
 
 .mem-overlay-rank {
-  font-size: 1rem;
+  font-size: 1.2rem;
+  margin-top: 6px;
   opacity: 0.85;
-}
-
-.mem-overlay-actions {
-  display: flex;
-  gap: 10px;
-  margin-top: 4px;
-}
-
-.mem-overlay-btn {
-  background: transparent;
-  border: 1px solid rgba(255, 255, 255, 0.4);
-  color: #fff;
-  padding: 8px 16px;
-  cursor: pointer;
-  font-size: 0.9rem;
-}
-
-.mem-overlay-btn:hover {
-  background: rgba(255, 255, 255, 0.1);
 }
 
 /* ── Username notice ── */
