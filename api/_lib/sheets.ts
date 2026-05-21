@@ -20,12 +20,17 @@ export interface LeaderboardResult {
   entries: LeaderboardEntry[]
   playerRank?: number
   playerEntry?: LeaderboardEntry
+  submissionRank?: number
+  submissionEntry?: LeaderboardEntry
 }
 
 export async function readLeaderboard(
   game: string,
   difficulty: string,
-  options?: { username?: string },
+  options?: {
+    username?: string
+    submission?: LeaderboardEntry
+  },
 ): Promise<LeaderboardResult> {
   const auth = getAuth()
   const sheets = google.sheets({ version: 'v4', auth })
@@ -44,6 +49,10 @@ export async function readLeaderboard(
     }))
     .filter((entry) => !isNaN(entry.time))
 
+  const orderedByScore = parsed
+    .slice()
+    .sort((a, b) => a.time - b.time || a.date.localeCompare(b.date) || a.username.localeCompare(b.username))
+
   // Keep only each player's personal best
   const bestByUser = new Map<string, LeaderboardEntry>()
   for (const entry of parsed) {
@@ -59,9 +68,26 @@ export async function readLeaderboard(
   if (!options?.username) return { entries }
 
   const idx = all.findIndex((e) => e.username === options.username)
-  if (idx === -1) return { entries }
+  const result: LeaderboardResult = { entries }
+  if (idx !== -1) {
+    result.playerRank = idx + 1
+    result.playerEntry = all[idx]
+  }
 
-  return { entries, playerRank: idx + 1, playerEntry: all[idx] }
+  if (options?.submission) {
+    const submissionIdx = orderedByScore.findIndex(
+      (entry) =>
+        entry.username === options.submission!.username &&
+        entry.time === options.submission!.time &&
+        entry.date === options.submission!.date,
+    )
+    if (submissionIdx !== -1) {
+      result.submissionRank = submissionIdx + 1
+      result.submissionEntry = orderedByScore[submissionIdx]
+    }
+  }
+
+  return result
 }
 
 export async function appendScore(

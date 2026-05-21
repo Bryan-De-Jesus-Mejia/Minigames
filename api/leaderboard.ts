@@ -43,7 +43,16 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     const date = new Date().toISOString()
     try {
       await appendScore(payload.game, payload.difficulty, safeUsername, time, date)
-      const result = await readLeaderboard(payload.game, payload.difficulty, { username: safeUsername })
+      const result = await readLeaderboard(payload.game, payload.difficulty, {
+        username: safeUsername,
+        submission: { username: safeUsername, time, date },
+      })
+      if (result.submissionRank !== undefined) {
+        result.playerRank = result.submissionRank
+      }
+      if (result.submissionEntry !== undefined) {
+        result.playerEntry = result.submissionEntry
+      }
       return res.status(200).json(result)
     } catch (err) {
       console.error('submit score failed:', err)
