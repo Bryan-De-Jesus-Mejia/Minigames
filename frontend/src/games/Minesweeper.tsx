@@ -195,6 +195,8 @@ export default function Minesweeper() {
     if (!difficulty || scoreRecorded || !minesPlaced) return
     setScoreRecorded(true)
     if (!sessionTokenRef.current) return
+    setPlayerRank(null)
+    setPlayerEntry(null)
     setLeaderboardPending(true)
     try {
       const res = await fetch('/api/leaderboard', {
@@ -470,6 +472,10 @@ export default function Minesweeper() {
     setStartTime(null)
     setElapsedTime(0)
     setScoreRecorded(false)
+    setLeaderboardPending(false)
+    setApiLeaderboard(null)
+    setPlayerRank(null)
+    setPlayerEntry(null)
     sessionTokenRef.current = null
     fetch('/api/game-session', {
       method: 'POST',

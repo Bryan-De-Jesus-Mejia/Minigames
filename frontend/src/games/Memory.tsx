@@ -172,6 +172,8 @@ export default function Memory() {
   async function recordWinTime(time: number) {
     if (scoreRecorded || !sessionTokenRef.current || !difficulty) return
     setScoreRecorded(true)
+    setPlayerRank(null)
+    setPlayerEntry(null)
     setLeaderboardPending(true)
     try {
       const res = await fetch('/api/leaderboard', {
