@@ -85,6 +85,7 @@ function App() {
       <Route path="/:lang/memory/:difficulty/leaderboard" element={<Suspense fallback={null}><Memory /></Suspense>} />
       <Route path="/:lang/tetris" element={<Suspense fallback={null}><Tetris /></Suspense>} />
       <Route path="/:lang/tetris/:mode" element={<Suspense fallback={null}><Tetris /></Suspense>} />
+      <Route path="/:lang/tetris/:mode/:action" element={<Suspense fallback={null}><Tetris /></Suspense>} />
       <Route
         path="/:lang/:game"
         element={(
