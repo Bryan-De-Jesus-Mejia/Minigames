@@ -43,6 +43,8 @@ const PIECE_COLORS: Record<PieceType, string> = {
   L: '#b18a63',
 }
 
+const PREVIEW_SIZE = 4
+
 const SHAPES: Record<PieceType, Cell[][]> = {
   I: [
     [[0, 1], [1, 1], [2, 1], [3, 1]],
@@ -200,12 +202,14 @@ export default function Tetris() {
 
   const [board, setBoard] = useState<Board>(() => createEmptyBoard())
   const [piece, setPiece] = useState<Piece>(() => createPiece())
+  const [nextPiece, setNextPiece] = useState<Piece>(() => createPiece())
   const [score, setScore] = useState(0)
   const [lines, setLines] = useState(0)
   const [gameOver, setGameOver] = useState(false)
 
   const boardRef = useRef(board)
   const pieceRef = useRef(piece)
+  const nextPieceRef = useRef(nextPiece)
   const scoreRef = useRef(score)
   const linesRef = useRef(lines)
   const gameOverRef = useRef(gameOver)
@@ -213,6 +217,7 @@ export default function Tetris() {
 
   useEffect(() => { boardRef.current = board }, [board])
   useEffect(() => { pieceRef.current = piece }, [piece])
+  useEffect(() => { nextPieceRef.current = nextPiece }, [nextPiece])
   useEffect(() => { scoreRef.current = score }, [score])
   useEffect(() => { linesRef.current = lines }, [lines])
   useEffect(() => { gameOverRef.current = gameOver }, [gameOver])
@@ -224,15 +229,18 @@ export default function Tetris() {
   const restartGame = useCallback(() => {
     const freshBoard = createEmptyBoard()
     const freshPiece = createPiece()
+    const freshNextPiece = createPiece()
 
     boardRef.current = freshBoard
     pieceRef.current = freshPiece
+    nextPieceRef.current = freshNextPiece
     scoreRef.current = 0
     linesRef.current = 0
     gameOverRef.current = false
 
     setBoard(freshBoard)
     setPiece(freshPiece)
+    setNextPiece(freshNextPiece)
     setScore(0)
     setLines(0)
     setGameOver(false)
@@ -303,10 +311,16 @@ export default function Tetris() {
     boardRef.current = clearedBoard
     setBoard(clearedBoard)
 
-    const nextPiece = createPiece()
-    if (canPlace(clearedBoard, nextPiece)) {
-      pieceRef.current = nextPiece
-      setPiece(nextPiece)
+    const queuedPiece = nextPieceRef.current
+    const freshNextPiece = createPiece()
+    const nextSpawnPiece = createPiece(queuedPiece.type)
+
+    nextPieceRef.current = freshNextPiece
+    setNextPiece(freshNextPiece)
+
+    if (canPlace(clearedBoard, nextSpawnPiece)) {
+      pieceRef.current = nextSpawnPiece
+      setPiece(nextSpawnPiece)
       return
     }
 
@@ -438,10 +452,15 @@ export default function Tetris() {
     return () => window.removeEventListener('keydown', handleKeyDown)
   }, [hardDrop, isPlaying, movePiece, restartGame, rotatePiece, softDrop])
 
-  const level = Math.floor(lines / 10) + 1
   const activeCells = useMemo(() => {
     return new Set(getPieceCells(piece).map(([x, y]) => `${x}:${y}`))
   }, [piece])
+
+  const previewCells = useMemo(() => {
+    return new Set(
+      getPieceCells({ ...nextPiece, x: 0, y: 0 }).map(([x, y]) => `${x}:${y}`),
+    )
+  }, [nextPiece])
 
   if (!selectedMode) {
     return (
@@ -510,13 +529,6 @@ export default function Tetris() {
     <GameFrame gameName={t('tetris')} onBack={() => navigate(`/${lang}/tetris/${selectedMode.key}`)}>
       <div className="tet-container tet-play">
         <div className="tet-play-card">
-          <div className="tet-play-header">
-            <div>
-              <div className="tet-play-kicker">{t('tetris.hud.mode')}</div>
-              <h2 className="tet-play-title">{t(selectedMode.titleKey)}</h2>
-            </div>
-          </div>
-
           <div className="tet-play-layout">
             <div className="tet-board-shell">
               <div className="tet-board" role="grid" aria-label={`${t('tetris')} ${t('tetris.hud.mode')}: ${t(selectedMode.titleKey)}`}>
@@ -550,6 +562,31 @@ export default function Tetris() {
             </div>
 
             <aside className="tet-sidebar">
+              <div className="tet-sidebar-header">
+                <div className="tet-play-kicker">{t('tetris.hud.mode')}</div>
+                <h2 className="tet-play-title">{t(selectedMode.titleKey)}</h2>
+              </div>
+
+              <div className="tet-next-panel">
+                <div className="tet-stat-label">{t('tetris.hud.next')}</div>
+                <div className="tet-next-grid" role="grid" aria-label={t('tetris.hud.next')}>
+                  {Array.from({ length: PREVIEW_SIZE * PREVIEW_SIZE }, (_, index) => {
+                    const x = index % PREVIEW_SIZE
+                    const y = Math.floor(index / PREVIEW_SIZE)
+                    const key = `${x}:${y}`
+                    const activeType = previewCells.has(key) ? nextPiece.type : null
+
+                    return (
+                      <div
+                        key={key}
+                        className={`tet-next-cell ${activeType ? 'tet-next-cell-filled' : ''}`}
+                        style={activeType ? { backgroundColor: PIECE_COLORS[activeType] } : undefined}
+                      />
+                    )
+                  })}
+                </div>
+              </div>
+
               <div className="tet-stat">
                 <span className="tet-stat-label">{t('tetris.hud.score')}</span>
                 <strong className="tet-stat-value">{score}</strong>
@@ -557,10 +594,6 @@ export default function Tetris() {
               <div className="tet-stat">
                 <span className="tet-stat-label">{t('tetris.hud.lines')}</span>
                 <strong className="tet-stat-value">{lines}</strong>
-              </div>
-              <div className="tet-stat">
-                <span className="tet-stat-label">{t('tetris.hud.level')}</span>
-                <strong className="tet-stat-value">{level}</strong>
               </div>
 
               <div className="tet-sidebar-actions">
