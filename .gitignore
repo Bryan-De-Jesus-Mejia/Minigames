@@ -109,7 +109,9 @@ dist
 
 # superpowers docs
 docs/
-
+.claude-flow/
+.mcp.json
+claude.md
 # Docusaurus cache and generated files
 .docusaurus
 
