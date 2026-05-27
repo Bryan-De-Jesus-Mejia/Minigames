@@ -7,7 +7,8 @@
   padding: clamp(16px, 4vw, 48px);
   background: #1a1a1a;
   color: #fff;
-  overflow: hidden;
+  overflow: auto;
+  -webkit-overflow-scrolling: touch;
 }
 
 .mem-menu {
@@ -146,6 +147,7 @@
   justify-content: center;
   padding: 4px;
   -webkit-overflow-scrolling: touch;
+  scrollbar-gutter: stable both-edges;
 }
 
 .mem-board {
@@ -317,6 +319,29 @@
 .mem-leaderboard-card::-webkit-scrollbar {
   width: 0;
   height: 0;
+}
+
+@media (max-width: 600px) {
+  .mem-container {
+    align-items: stretch;
+    padding: 12px;
+  }
+
+  .mem-game {
+    gap: 12px;
+  }
+
+  .mem-board-wrapper {
+    justify-content: flex-start;
+    width: 100%;
+    max-height: calc(100dvh - 170px);
+    overflow: auto;
+    padding: 4px 0 12px;
+  }
+
+  .mem-board {
+    margin: 0 auto;
+  }
 }
 
 .mem-leaderboard-title {

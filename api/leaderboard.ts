@@ -2,6 +2,18 @@ import type { VercelRequest, VercelResponse } from '@vercel/node'
 import { verifyToken } from './_lib/token'
 import { readLeaderboard, appendScore } from './_lib/sheets'
 
+const DEFAULT_USERNAME = 'Player'
+
+export function normalizeLeaderboardUsername(username: unknown): string | null {
+  if (typeof username !== 'string') return null
+
+  const trimmed = username.trim().slice(0, 30)
+  if (!trimmed) return null
+  if (trimmed.toLowerCase() === DEFAULT_USERNAME.toLowerCase()) return null
+
+  return trimmed
+}
+
 export default async function handler(req: VercelRequest, res: VercelResponse) {
   if (req.method === 'GET') {
     const { game, difficulty, username } = req.query
@@ -9,7 +21,8 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       return res.status(400).json({ error: 'game and difficulty query params required' })
     }
     try {
-      const opts = typeof username === 'string' ? { username } : undefined
+      const normalizedUsername = normalizeLeaderboardUsername(username)
+      const opts = normalizedUsername ? { username: normalizedUsername } : undefined
       const result = await readLeaderboard(game, difficulty, opts)
       // Skip cache when looking up a player's personal rank so it's always fresh
       if (opts) {
@@ -36,14 +49,17 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     if (time < 0.5 || time > 7200) {
       return res.status(400).json({ error: 'Time out of plausible range' })
     }
-    const safeUsername =
-      typeof username === 'string' && username.trim().length > 0
-        ? username.trim().slice(0, 30)
-        : 'Player'
+    const safeUsername = normalizeLeaderboardUsername(username)
     const date = new Date().toISOString()
     try {
-      await appendScore(payload.game, payload.difficulty, safeUsername, time, date)
-      const result = await readLeaderboard(payload.game, payload.difficulty, { username: safeUsername })
+      if (safeUsername) {
+        await appendScore(payload.game, payload.difficulty, safeUsername, time, date)
+      }
+      const result = await readLeaderboard(
+        payload.game,
+        payload.difficulty,
+        safeUsername ? { username: safeUsername } : undefined,
+      )
       return res.status(200).json(result)
     } catch (err) {
       console.error('submit score failed:', err)
