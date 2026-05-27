@@ -8,6 +8,7 @@ import './App.css'
 
 const Minesweeper = lazy(() => import('./games/Minesweeper'))
 const Memory = lazy(() => import('./games/Memory'))
+const Tetris = lazy(() => import('./games/Tetris'))
 
 type Language = 'en' | 'es'
 
@@ -15,7 +16,7 @@ function ValidatedGameRoute({ children }: { children: React.ReactNode }) {
   const { game } = useParams<{ game?: string }>()
   const navigate = useNavigate()
 
-  const allowedGames = ['snake', 'tetris', 'flappybird']
+  const allowedGames = ['snake', 'flappybird']
 
   React.useEffect(() => {
     if (!game || !allowedGames.includes(game)) {
@@ -82,6 +83,8 @@ function App() {
       <Route path="/:lang/memory" element={<Suspense fallback={null}><Memory /></Suspense>} />
       <Route path="/:lang/memory/:difficulty" element={<Suspense fallback={null}><Memory /></Suspense>} />
       <Route path="/:lang/memory/:difficulty/leaderboard" element={<Suspense fallback={null}><Memory /></Suspense>} />
+      <Route path="/:lang/tetris" element={<Suspense fallback={null}><Tetris /></Suspense>} />
+      <Route path="/:lang/tetris/:mode" element={<Suspense fallback={null}><Tetris /></Suspense>} />
       <Route
         path="/:lang/:game"
         element={(
