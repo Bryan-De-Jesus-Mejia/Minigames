@@ -124,6 +124,34 @@ const CONTROL_ROWS = [
   { labelKey: 'tetris.control.rotate', value: '↑ / X / Z' },
   { labelKey: 'tetris.control.softDrop', value: '↓' },
   { labelKey: 'tetris.control.hardDrop', value: 'Space' },
+  { labelKey: 'tetris.control.hold', value: 'C / Shift' },
+] as const
+
+const MOBILE_CONTROL_ROWS = [
+  {
+    labelKey: 'tetris.mobile.left',
+    action: 'left',
+  },
+  {
+    labelKey: 'tetris.mobile.rotate',
+    action: 'rotate',
+  },
+  {
+    labelKey: 'tetris.mobile.right',
+    action: 'right',
+  },
+  {
+    labelKey: 'tetris.mobile.drop',
+    action: 'drop',
+  },
+  {
+    labelKey: 'tetris.mobile.hold',
+    action: 'hold',
+  },
+  {
+    labelKey: 'tetris.mobile.hardDrop',
+    action: 'hardDrop',
+  },
 ] as const
 
 function createEmptyRow(): BoardCell[] {
@@ -151,6 +179,12 @@ function getPieceCells(piece: Piece): Cell[] {
   return SHAPES[piece.type][piece.rotation].map(([offsetX, offsetY]) => [piece.x + offsetX, piece.y + offsetY] as const)
 }
 
+function getPreviewCells(pieceType: PieceType): Set<string> {
+  return new Set(
+    getPieceCells({ type: pieceType, rotation: 0, x: 0, y: 0 }).map(([x, y]) => `${x}:${y}`),
+  )
+}
+
 function canPlace(board: Board, piece: Piece): boolean {
   return getPieceCells(piece).every(([x, y]) => {
     if (x < 0 || x >= BOARD_WIDTH || y < 0 || y >= BOARD_HEIGHT) {
@@ -159,6 +193,16 @@ function canPlace(board: Board, piece: Piece): boolean {
 
     return board[y][x] === null
   })
+}
+
+function getLandingPiece(board: Board, piece: Piece): Piece {
+  let landingPiece = piece
+
+  while (canPlace(board, { ...landingPiece, y: landingPiece.y + 1 })) {
+    landingPiece = { ...landingPiece, y: landingPiece.y + 1 }
+  }
+
+  return landingPiece
 }
 
 function mergePiece(board: Board, piece: Piece): Board {
@@ -203,6 +247,7 @@ export default function Tetris() {
   const [board, setBoard] = useState<Board>(() => createEmptyBoard())
   const [piece, setPiece] = useState<Piece>(() => createPiece())
   const [nextPiece, setNextPiece] = useState<Piece>(() => createPiece())
+  const [heldPiece, setHeldPiece] = useState<PieceType | null>(null)
   const [score, setScore] = useState(0)
   const [lines, setLines] = useState(0)
   const [gameOver, setGameOver] = useState(false)
@@ -210,6 +255,8 @@ export default function Tetris() {
   const boardRef = useRef(board)
   const pieceRef = useRef(piece)
   const nextPieceRef = useRef(nextPiece)
+  const heldPieceRef = useRef(heldPiece)
+  const holdUsedRef = useRef(false)
   const scoreRef = useRef(score)
   const linesRef = useRef(lines)
   const gameOverRef = useRef(gameOver)
@@ -218,6 +265,7 @@ export default function Tetris() {
   useEffect(() => { boardRef.current = board }, [board])
   useEffect(() => { pieceRef.current = piece }, [piece])
   useEffect(() => { nextPieceRef.current = nextPiece }, [nextPiece])
+  useEffect(() => { heldPieceRef.current = heldPiece }, [heldPiece])
   useEffect(() => { scoreRef.current = score }, [score])
   useEffect(() => { linesRef.current = lines }, [lines])
   useEffect(() => { gameOverRef.current = gameOver }, [gameOver])
@@ -234,6 +282,8 @@ export default function Tetris() {
     boardRef.current = freshBoard
     pieceRef.current = freshPiece
     nextPieceRef.current = freshNextPiece
+    heldPieceRef.current = null
+    holdUsedRef.current = false
     scoreRef.current = 0
     linesRef.current = 0
     gameOverRef.current = false
@@ -241,6 +291,7 @@ export default function Tetris() {
     setBoard(freshBoard)
     setPiece(freshPiece)
     setNextPiece(freshNextPiece)
+    setHeldPiece(null)
     setScore(0)
     setLines(0)
     setGameOver(false)
@@ -321,6 +372,7 @@ export default function Tetris() {
     if (canPlace(clearedBoard, nextSpawnPiece)) {
       pieceRef.current = nextSpawnPiece
       setPiece(nextSpawnPiece)
+      holdUsedRef.current = false
       return
     }
 
@@ -352,6 +404,52 @@ export default function Tetris() {
 
     lockPiece()
   }, [lockPiece, movePiece])
+
+  const holdPiece = useCallback(() => {
+    if (gameOverRef.current || holdUsedRef.current) {
+      return false
+    }
+
+    const currentPiece = pieceRef.current
+    const nextHeldPiece = currentPiece.type
+
+    if (heldPieceRef.current === null) {
+      const queuedPiece = nextPieceRef.current
+      const freshNextPiece = createPiece()
+      const nextSpawnPiece = createPiece(queuedPiece.type)
+
+      nextPieceRef.current = freshNextPiece
+      setNextPiece(freshNextPiece)
+
+      if (!canPlace(boardRef.current, nextSpawnPiece)) {
+        gameOverRef.current = true
+        setGameOver(true)
+        return false
+      }
+
+      heldPieceRef.current = nextHeldPiece
+      setHeldPiece(nextHeldPiece)
+      pieceRef.current = nextSpawnPiece
+      setPiece(nextSpawnPiece)
+      holdUsedRef.current = true
+      return true
+    }
+
+    const swappedPiece = createPiece(heldPieceRef.current)
+
+    if (!canPlace(boardRef.current, swappedPiece)) {
+      gameOverRef.current = true
+      setGameOver(true)
+      return false
+    }
+
+    heldPieceRef.current = nextHeldPiece
+    setHeldPiece(nextHeldPiece)
+    pieceRef.current = swappedPiece
+    setPiece(swappedPiece)
+    holdUsedRef.current = true
+    return true
+  }, [])
 
   useEffect(() => {
     if (!isPlaying) {
@@ -407,7 +505,7 @@ export default function Tetris() {
       const key = event.key.toLowerCase()
       const code = event.code
 
-      if (code === 'Space' || key.startsWith('arrow') || key === 'x' || key === 'z' || key === 'r') {
+      if (code === 'Space' || code === 'ShiftLeft' || code === 'ShiftRight' || key.startsWith('arrow') || key === 'x' || key === 'z' || key === 'r' || key === 'c') {
         event.preventDefault()
       }
 
@@ -420,6 +518,11 @@ export default function Tetris() {
 
       if (code === 'Space') {
         hardDrop()
+        return
+      }
+
+      if (key === 'c' || code === 'ShiftLeft' || code === 'ShiftRight') {
+        holdPiece()
         return
       }
 
@@ -450,17 +553,50 @@ export default function Tetris() {
 
     window.addEventListener('keydown', handleKeyDown)
     return () => window.removeEventListener('keydown', handleKeyDown)
-  }, [hardDrop, isPlaying, movePiece, restartGame, rotatePiece, softDrop])
+  }, [hardDrop, holdPiece, isPlaying, movePiece, restartGame, rotatePiece, softDrop])
 
   const activeCells = useMemo(() => {
     return new Set(getPieceCells(piece).map(([x, y]) => `${x}:${y}`))
   }, [piece])
 
+  const landingPiece = useMemo(() => getLandingPiece(board, piece), [board, piece])
+
+  const landingCells = useMemo(() => {
+    return new Set(getPieceCells(landingPiece).map(([x, y]) => `${x}:${y}`))
+  }, [landingPiece])
+
   const previewCells = useMemo(() => {
-    return new Set(
-      getPieceCells({ ...nextPiece, x: 0, y: 0 }).map(([x, y]) => `${x}:${y}`),
-    )
+    return getPreviewCells(nextPiece.type)
   }, [nextPiece])
+
+  const holdPreviewCells = useMemo(() => {
+    return heldPiece ? getPreviewCells(heldPiece) : new Set<string>()
+  }, [heldPiece])
+
+  const handleMobileControl = useCallback((action: typeof MOBILE_CONTROL_ROWS[number]['action']) => {
+    switch (action) {
+      case 'left':
+        movePiece(-1, 0)
+        break
+      case 'right':
+        movePiece(1, 0)
+        break
+      case 'rotate':
+        rotatePiece(1)
+        break
+      case 'drop':
+        softDrop()
+        break
+      case 'hold':
+        holdPiece()
+        break
+      case 'hardDrop':
+        hardDrop()
+        break
+      default:
+        break
+    }
+  }, [hardDrop, holdPiece, movePiece, rotatePiece, softDrop])
 
   if (!selectedMode) {
     return (
@@ -536,12 +672,13 @@ export default function Tetris() {
                   row.map((cell, columnIndex) => {
                     const key = `${columnIndex}:${rowIndex}`
                     const activeType = activeCells.has(key) ? piece.type : cell
+                    const isLandingCell = !activeType && landingCells.has(key)
 
                     return (
                       <div
                         key={key}
-                        className={`tet-cell ${activeType ? 'tet-cell-filled' : ''}`}
-                        style={activeType ? { backgroundColor: PIECE_COLORS[activeType] } : undefined}
+                        className={`tet-cell ${activeType ? 'tet-cell-filled' : ''} ${isLandingCell ? 'tet-cell-ghost' : ''}`}
+                        style={activeType ? { backgroundColor: PIECE_COLORS[activeType] } : isLandingCell ? { borderColor: 'rgba(255, 255, 255, 0.18)' } : undefined}
                       />
                     )
                   })
@@ -559,12 +696,53 @@ export default function Tetris() {
                   </div>
                 </div>
               ) : null}
+
+              <div className="tet-mobile-controls" aria-label={t('tetris.mobile.title')}>
+                <button type="button" className="tet-mobile-control tet-mobile-control-wide" onPointerDown={(event) => { event.preventDefault(); handleMobileControl('hold') }}>
+                  {t('tetris.mobile.hold')}
+                </button>
+                <button type="button" className="tet-mobile-control" onPointerDown={(event) => { event.preventDefault(); handleMobileControl('left') }}>
+                  {t('tetris.mobile.left')}
+                </button>
+                <button type="button" className="tet-mobile-control" onPointerDown={(event) => { event.preventDefault(); handleMobileControl('rotate') }}>
+                  {t('tetris.mobile.rotate')}
+                </button>
+                <button type="button" className="tet-mobile-control" onPointerDown={(event) => { event.preventDefault(); handleMobileControl('right') }}>
+                  {t('tetris.mobile.right')}
+                </button>
+                <button type="button" className="tet-mobile-control tet-mobile-control-wide" onPointerDown={(event) => { event.preventDefault(); handleMobileControl('drop') }}>
+                  {t('tetris.mobile.drop')}
+                </button>
+                <button type="button" className="tet-mobile-control tet-mobile-control-wide" onPointerDown={(event) => { event.preventDefault(); handleMobileControl('hardDrop') }}>
+                  {t('tetris.mobile.hardDrop')}
+                </button>
+              </div>
             </div>
 
             <aside className="tet-sidebar">
               <div className="tet-sidebar-header">
                 <div className="tet-play-kicker">{t('tetris.hud.mode')}</div>
                 <h2 className="tet-play-title">{t(selectedMode.titleKey)}</h2>
+              </div>
+
+              <div className="tet-hold-panel">
+                <div className="tet-stat-label">{t('tetris.hud.hold')}</div>
+                <div className="tet-next-grid" role="grid" aria-label={t('tetris.hud.hold')}>
+                  {Array.from({ length: PREVIEW_SIZE * PREVIEW_SIZE }, (_, index) => {
+                    const x = index % PREVIEW_SIZE
+                    const y = Math.floor(index / PREVIEW_SIZE)
+                    const key = `${x}:${y}`
+                    const activeType = heldPiece && holdPreviewCells.has(key) ? heldPiece : null
+
+                    return (
+                      <div
+                        key={key}
+                        className={`tet-next-cell ${activeType ? 'tet-next-cell-filled' : ''}`}
+                        style={activeType ? { backgroundColor: PIECE_COLORS[activeType] } : undefined}
+                      />
+                    )
+                  })}
+                </div>
               </div>
 
               <div className="tet-next-panel">

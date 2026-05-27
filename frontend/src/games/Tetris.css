@@ -285,6 +285,12 @@
   box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.08);
 }
 
+.tet-cell-ghost {
+  background: rgba(255, 255, 255, 0.04);
+  border-color: rgba(255, 255, 255, 0.12);
+  box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.06);
+}
+
 .tet-gameover-overlay {
   position: absolute;
   inset: 0;
@@ -317,6 +323,36 @@
   font-variant-numeric: tabular-nums;
 }
 
+.tet-mobile-controls {
+  display: none;
+  width: 100%;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 8px;
+  margin-top: 14px;
+}
+
+.tet-mobile-control {
+  border: 1px solid #2a2a2a;
+  background: #222;
+  color: #fff;
+  padding: 12px 10px;
+  font-size: 0.92rem;
+  font-weight: 600;
+  cursor: pointer;
+  touch-action: manipulation;
+  user-select: none;
+}
+
+.tet-mobile-control:hover,
+.tet-mobile-control:active {
+  background: #2a2a2a;
+  border-color: #3a3a3a;
+}
+
+.tet-mobile-control-wide {
+  grid-column: span 3;
+}
+
 .tet-sidebar {
   display: flex;
   flex-direction: column;
@@ -340,6 +376,7 @@
   margin-top: 4px;
 }
 
+.tet-hold-panel,
 .tet-next-panel {
   width: 100%;
   display: flex;
@@ -417,7 +454,8 @@
   }
 
   .tet-board-shell {
-    max-width: 100%;
+    width: min(100%, 280px);
+    max-width: 280px;
   }
 
   .tet-sidebar-actions {
@@ -429,11 +467,15 @@
   .tet-sidebar-actions .tet-back-button {
     flex: 1 1 160px;
   }
+
+  .tet-mobile-controls {
+    display: grid;
+  }
 }
 
 @media (max-width: 600px) {
   .tet-play-card {
-    padding: 14px;
+    padding: 12px;
   }
 
   .tet-play-header {
@@ -447,9 +489,23 @@
     font-size: 1rem;
   }
 
+  .tet-board-shell {
+    width: min(100%, 240px);
+    max-width: 240px;
+  }
+
   .tet-sidebar {
     padding: 12px;
     gap: 10px;
+  }
+
+  .tet-mobile-controls {
+    gap: 6px;
+  }
+
+  .tet-mobile-control {
+    padding: 14px 10px;
+    font-size: 0.88rem;
   }
 }
 
