@@ -1,11 +1,28 @@
 import type { VercelRequest, VercelResponse } from '@vercel/node'
 import { randomUUID } from 'crypto'
 import { signToken } from './_lib/token'
+import { checkRateLimit, getClientIp } from './_lib/rate-limit'
+
+const GAME_SESSION_LIMIT = 30
+const GAME_SESSION_WINDOW_MS = 60_000
 
 export default function handler(req: VercelRequest, res: VercelResponse) {
   if (req.method !== 'POST') {
     return res.status(405).json({ error: 'Method not allowed' })
   }
+
+  const rateLimitResult = checkRateLimit(
+    `game-session:${getClientIp(req.headers)}`,
+    GAME_SESSION_LIMIT,
+    GAME_SESSION_WINDOW_MS,
+  )
+  if (!rateLimitResult.allowed) {
+    if (rateLimitResult.retryAfterMs !== undefined) {
+      res.setHeader('Retry-After', Math.ceil(rateLimitResult.retryAfterMs / 1000))
+    }
+    return res.status(429).json({ error: 'Too many requests' })
+  }
+
   const { game, difficulty } = (req.body ?? {}) as Record<string, unknown>
   if (typeof game !== 'string' || typeof difficulty !== 'string') {
     return res.status(400).json({ error: 'game and difficulty are required' })
