@@ -1,0 +1,279 @@
+.ms-leaderboard-page,
+.mem-leaderboard-page,
+.tet-leaderboard-page {
+  justify-content: center;
+  align-items: center;
+  overflow-y: auto;
+  overflow-x: hidden;
+  min-height: 0;
+  width: 100%;
+  position: relative;
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}
+
+.ms-leaderboard-card,
+.mem-leaderboard-card,
+.tet-leaderboard-card {
+  width: min(100%, 620px);
+  max-height: calc(100dvh - 170px);
+  overflow-y: auto;
+  overflow-x: hidden;
+  border: 1px solid #2a2a2a;
+  background: #1f1f1f;
+  padding: 20px;
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}
+
+.ms-leaderboard-page::-webkit-scrollbar,
+.ms-leaderboard-card::-webkit-scrollbar,
+.mem-leaderboard-page::-webkit-scrollbar,
+.mem-leaderboard-card::-webkit-scrollbar,
+.tet-leaderboard-page::-webkit-scrollbar,
+.tet-leaderboard-card::-webkit-scrollbar {
+  width: 0;
+  height: 0;
+}
+
+.ms-leaderboard-title,
+.mem-leaderboard-title,
+.tet-leaderboard-title {
+  font-size: clamp(1rem, 2.4vw, 1.6rem);
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  margin-bottom: 8px;
+}
+
+.ms-leaderboard-meta,
+.mem-leaderboard-meta,
+.tet-leaderboard-meta {
+  margin-bottom: 14px;
+  color: #c8c8c8;
+  font-size: 0.92rem;
+}
+
+.ms-leaderboard-layout,
+.mem-leaderboard-layout {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.ms-podium,
+.mem-podium {
+  display: flex;
+  width: 100%;
+  min-width: 0;
+  justify-content: space-between;
+  gap: 10px;
+  align-items: flex-end;
+}
+
+.ms-podium-slot,
+.mem-podium-slot {
+  display: flex;
+  flex: 1 1 0;
+  min-width: 0;
+  box-sizing: border-box;
+  flex-direction: column;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 8px;
+  border: 1px solid #2a2a2a;
+  background: linear-gradient(180deg, #2a2a2a 0%, #1f1f1f 100%);
+  padding: 16px 12px;
+  text-align: center;
+}
+
+.ms-podium-1,
+.mem-podium-1 {
+  min-height: 196px;
+  order: 2;
+  margin-bottom: 0;
+  border-color: #f1d08a;
+  background: linear-gradient(180deg, rgba(241, 208, 138, 0.22) 0%, rgba(31, 31, 31, 1) 100%);
+}
+
+.ms-podium-2,
+.mem-podium-2 {
+  order: 1;
+  min-height: 182px;
+  border-color: #7d8793;
+}
+
+.ms-podium-3,
+.mem-podium-3 {
+  order: 3;
+  min-height: 128px;
+  border-color: #b87333;
+}
+
+.ms-podium-place,
+.mem-podium-place {
+  font-size: 1rem;
+  font-weight: 800;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.ms-podium-username,
+.mem-podium-username {
+  font-size: 0.92rem;
+  font-weight: 700;
+  color: #ececec;
+  max-width: 100%;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.ms-podium-time,
+.mem-podium-time {
+  font-size: clamp(1rem, 2vw, 1.3rem);
+  font-weight: 800;
+  width: 100%;
+  max-width: 11ch;
+  text-align: center;
+  font-variant-numeric: tabular-nums;
+  font-feature-settings: 'tnum' 1;
+}
+
+.ms-podium-date,
+.mem-podium-date {
+  width: 100%;
+  max-width: 10ch;
+  text-align: center;
+  color: #bcbcbc;
+  font-size: 0.82rem;
+  font-variant-numeric: tabular-nums;
+  font-feature-settings: 'tnum' 1;
+}
+
+.ms-leaderboard-list,
+.mem-leaderboard-list,
+.tet-leaderboard-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  gap: 8px;
+}
+
+.ms-leaderboard-item,
+.mem-leaderboard-item {
+  display: grid;
+  grid-template-columns: 56px minmax(0, 1fr) 11ch 10ch;
+  gap: 10px;
+  align-items: center;
+  border: 1px solid #2a2a2a;
+  background: #232323;
+  padding: 10px 12px;
+}
+
+.tet-leaderboard-item {
+  display: grid;
+  grid-template-columns: 56px minmax(0, 1fr) auto;
+  gap: 10px;
+  align-items: center;
+  border: 1px solid #2a2a2a;
+  background: #232323;
+  padding: 10px 12px;
+}
+
+.ms-rank,
+.mem-rank,
+.tet-leaderboard-rank {
+  color: #f1d08a;
+  font-weight: 700;
+}
+
+.ms-score-time,
+.mem-score-time,
+.tet-leaderboard-score {
+  font-weight: 700;
+  text-align: right;
+  font-variant-numeric: tabular-nums;
+  font-feature-settings: 'tnum' 1;
+}
+
+.ms-score-user,
+.mem-score-user,
+.tet-leaderboard-user {
+  color: #e8e8e8;
+  font-weight: 600;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.ms-score-date,
+.mem-score-date {
+  color: #bcbcbc;
+  font-size: 0.85rem;
+  text-align: right;
+  font-variant-numeric: tabular-nums;
+  font-feature-settings: 'tnum' 1;
+}
+
+.ms-leaderboard-empty,
+.mem-leaderboard-empty,
+.tet-leaderboard-empty {
+  color: #9f9f9f;
+  font-size: 0.95rem;
+}
+
+.ms-leaderboard-loading,
+.mem-leaderboard-loading,
+.tet-leaderboard-loading {
+  color: #c8c8c8;
+  font-size: 0.95rem;
+}
+
+.ms-leaderboard-separator,
+.mem-leaderboard-separator {
+  color: #9f9f9f;
+  text-align: center;
+  letter-spacing: 0.2em;
+}
+
+.ms-leaderboard-item-you,
+.mem-leaderboard-item-you,
+.tet-leaderboard-item-you {
+  border-color: #3a3a3a;
+  background: #262626;
+}
+
+@media (max-width: 600px) {
+  .ms-leaderboard-card,
+  .mem-leaderboard-card,
+  .tet-leaderboard-card {
+    padding: 16px;
+    max-height: calc(100dvh - 150px);
+  }
+
+  .ms-leaderboard-meta,
+  .mem-leaderboard-meta,
+  .tet-leaderboard-meta {
+    margin-bottom: 12px;
+  }
+
+  .ms-podium,
+  .mem-podium {
+    gap: 8px;
+  }
+
+  .ms-podium-slot,
+  .mem-podium-slot {
+    padding: 14px 10px;
+  }
+
+  .ms-leaderboard-item,
+  .mem-leaderboard-item,
+  .tet-leaderboard-item {
+    gap: 8px;
+    padding: 10px 11px;
+  }
+}

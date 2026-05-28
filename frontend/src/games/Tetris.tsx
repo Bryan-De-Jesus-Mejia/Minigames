@@ -5,6 +5,7 @@ import { UsernameInput } from '../components/UsernameInput'
 import { useLanguage } from '../context/LanguageContext'
 import { useUsername } from '../hooks/useUsername'
 import './Tetris.css'
+import './Leaderboard.css'
 
 type TetrisModeKey = 'classic' | 'marathon' | 'zen'
 

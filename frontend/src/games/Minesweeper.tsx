@@ -4,6 +4,7 @@ import { GameFrame } from '../components/GameFrame'
 import { useLanguage } from '../context/LanguageContext'
 import { UsernameInput } from '../components/UsernameInput'
 import './Minesweeper.css'
+import './Leaderboard.css'
 import FlagIcon from '../components/icons/FlagIcon'
 
 type Cell = {

@@ -4,6 +4,7 @@ import { GameFrame } from '../components/GameFrame'
 import { useLanguage } from '../context/LanguageContext'
 import { UsernameInput } from '../components/UsernameInput'
 import './Memory.css'
+import './Leaderboard.css'
 
 type DifficultyKey = 'easy' | 'medium' | 'hard'
 
