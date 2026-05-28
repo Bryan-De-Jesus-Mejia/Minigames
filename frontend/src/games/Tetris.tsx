@@ -261,6 +261,8 @@ export default function Tetris() {
   const linesRef = useRef(lines)
   const gameOverRef = useRef(gameOver)
   const dropTimeoutRef = useRef<number | null>(null)
+  const mobileRepeatTimeoutRef = useRef<number | null>(null)
+  const mobileRepeatIntervalRef = useRef<number | null>(null)
 
   useEffect(() => { boardRef.current = board }, [board])
   useEffect(() => { pieceRef.current = piece }, [piece])
@@ -404,6 +406,26 @@ export default function Tetris() {
 
     lockPiece()
   }, [lockPiece, movePiece])
+
+  const stopMobileRepeat = useCallback(() => {
+    if (mobileRepeatTimeoutRef.current !== null) {
+      window.clearTimeout(mobileRepeatTimeoutRef.current)
+      mobileRepeatTimeoutRef.current = null
+    }
+
+    if (mobileRepeatIntervalRef.current !== null) {
+      window.clearInterval(mobileRepeatIntervalRef.current)
+      mobileRepeatIntervalRef.current = null
+    }
+  }, [])
+
+  const startMobileRepeat = useCallback((deltaX: -1 | 1) => {
+    stopMobileRepeat()
+    movePiece(deltaX, 0)
+    mobileRepeatIntervalRef.current = window.setInterval(() => {
+      movePiece(deltaX, 0)
+    }, 85)
+  }, [movePiece, stopMobileRepeat])
 
   const holdPiece = useCallback(() => {
     if (gameOverRef.current || holdUsedRef.current) {
@@ -576,10 +598,10 @@ export default function Tetris() {
   const handleMobileControl = useCallback((action: typeof MOBILE_CONTROL_ROWS[number]['action']) => {
     switch (action) {
       case 'left':
-        movePiece(-1, 0)
+        startMobileRepeat(-1)
         break
       case 'right':
-        movePiece(1, 0)
+        startMobileRepeat(1)
         break
       case 'rotate':
         rotatePiece(1)
@@ -596,7 +618,13 @@ export default function Tetris() {
       default:
         break
     }
-  }, [hardDrop, holdPiece, movePiece, rotatePiece, softDrop])
+  }, [hardDrop, holdPiece, rotatePiece, softDrop, startMobileRepeat])
+
+  useEffect(() => {
+    return () => {
+      stopMobileRepeat()
+    }
+  }, [stopMobileRepeat])
 
   if (!selectedMode) {
     return (
@@ -701,13 +729,27 @@ export default function Tetris() {
                 <button type="button" className="tet-mobile-control tet-mobile-control-wide" onPointerDown={(event) => { event.preventDefault(); handleMobileControl('hold') }}>
                   {t('tetris.mobile.hold')}
                 </button>
-                <button type="button" className="tet-mobile-control" onPointerDown={(event) => { event.preventDefault(); handleMobileControl('left') }}>
+                <button
+                  type="button"
+                  className="tet-mobile-control"
+                  onPointerDown={(event) => { event.preventDefault(); handleMobileControl('left') }}
+                  onPointerUp={stopMobileRepeat}
+                  onPointerCancel={stopMobileRepeat}
+                  onPointerLeave={stopMobileRepeat}
+                >
                   {t('tetris.mobile.left')}
                 </button>
                 <button type="button" className="tet-mobile-control" onPointerDown={(event) => { event.preventDefault(); handleMobileControl('rotate') }}>
                   {t('tetris.mobile.rotate')}
                 </button>
-                <button type="button" className="tet-mobile-control" onPointerDown={(event) => { event.preventDefault(); handleMobileControl('right') }}>
+                <button
+                  type="button"
+                  className="tet-mobile-control"
+                  onPointerDown={(event) => { event.preventDefault(); handleMobileControl('right') }}
+                  onPointerUp={stopMobileRepeat}
+                  onPointerCancel={stopMobileRepeat}
+                  onPointerLeave={stopMobileRepeat}
+                >
                   {t('tetris.mobile.right')}
                 </button>
                 <button type="button" className="tet-mobile-control tet-mobile-control-wide" onPointerDown={(event) => { event.preventDefault(); handleMobileControl('drop') }}>
