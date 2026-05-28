@@ -3,6 +3,7 @@ import { useNavigate, useParams } from 'react-router-dom'
 import { GameFrame } from '../components/GameFrame'
 import { UsernameInput } from '../components/UsernameInput'
 import { useLanguage } from '../context/LanguageContext'
+import { useUsername } from '../hooks/useUsername'
 import './Tetris.css'
 
 type TetrisModeKey = 'classic' | 'marathon' | 'zen'
@@ -14,6 +15,9 @@ type TetrisMode = {
   dropInterval: number
   dropStep: number
   minDropInterval: number
+  startLevel: number
+  linesPerLevel: number
+  scoreMultiplier: number
 }
 
 type PieceType = 'I' | 'O' | 'T' | 'S' | 'Z' | 'J' | 'L'
@@ -26,6 +30,12 @@ type Piece = {
   rotation: number
   x: number
   y: number
+}
+
+type LeaderboardEntry = {
+  username: string
+  score: number
+  date: string
 }
 
 const BOARD_WIDTH = 10
@@ -100,22 +110,31 @@ const MODES: TetrisMode[] = [
     dropInterval: 700,
     dropStep: 45,
     minDropInterval: 140,
+    startLevel: 1,
+    linesPerLevel: 10,
+    scoreMultiplier: 1,
   },
   {
     key: 'marathon',
     titleKey: 'tetris.mode.marathon',
     summaryKey: 'tetris.mode.marathon.summary',
-    dropInterval: 520,
-    dropStep: 40,
-    minDropInterval: 90,
+    dropInterval: 420,
+    dropStep: 36,
+    minDropInterval: 70,
+    startLevel: 3,
+    linesPerLevel: 8,
+    scoreMultiplier: 1.25,
   },
   {
     key: 'zen',
     titleKey: 'tetris.mode.zen',
     summaryKey: 'tetris.mode.zen.summary',
-    dropInterval: 900,
-    dropStep: 30,
-    minDropInterval: 220,
+    dropInterval: 980,
+    dropStep: 0,
+    minDropInterval: 980,
+    startLevel: 1,
+    linesPerLevel: Number.POSITIVE_INFINITY,
+    scoreMultiplier: 0.75,
   },
 ]
 
@@ -228,21 +247,28 @@ function clearCompleteLines(board: Board): { board: Board; clearedLines: number 
   }
 }
 
-function scoreForLines(clearedLines: number, level: number): number {
-  return LINE_SCORE_TABLE[clearedLines] * level
+function getLevelForLines(mode: TetrisMode, lines: number): number {
+  return mode.startLevel + Math.floor(lines / mode.linesPerLevel)
 }
 
-function getDropInterval(mode: TetrisMode, level: number): number {
-  return Math.max(mode.minDropInterval, mode.dropInterval - ((level - 1) * mode.dropStep))
+function scoreForLines(clearedLines: number, level: number, scoreMultiplier: number): number {
+  return Math.round(LINE_SCORE_TABLE[clearedLines] * level * scoreMultiplier)
+}
+
+function getDropInterval(mode: TetrisMode, lines: number): number {
+  const level = getLevelForLines(mode, lines)
+  return Math.max(mode.minDropInterval, mode.dropInterval - ((level - mode.startLevel) * mode.dropStep))
 }
 
 export default function Tetris() {
   const { lang, mode: modeParam, action: actionParam } = useParams<{ lang: string; mode?: string; action?: string }>()
   const navigate = useNavigate()
   const { t } = useLanguage()
+  const { username } = useUsername()
 
   const selectedMode = MODES.find((mode) => mode.key === modeParam) ?? null
   const isPlaying = selectedMode !== null && actionParam === 'play'
+  const isLeaderboardPage = selectedMode !== null && actionParam === 'leaderboard'
 
   const [board, setBoard] = useState<Board>(() => createEmptyBoard())
   const [piece, setPiece] = useState<Piece>(() => createPiece())
@@ -251,6 +277,10 @@ export default function Tetris() {
   const [score, setScore] = useState(0)
   const [lines, setLines] = useState(0)
   const [gameOver, setGameOver] = useState(false)
+  const [sessionToken, setSessionToken] = useState<string | null>(null)
+  const [leaderboardLoading, setLeaderboardLoading] = useState(false)
+  const [leaderboardEntries, setLeaderboardEntries] = useState<LeaderboardEntry[] | null>(null)
+  const [scoreSubmitting, setScoreSubmitting] = useState(false)
 
   const boardRef = useRef(board)
   const pieceRef = useRef(piece)
@@ -263,6 +293,8 @@ export default function Tetris() {
   const dropTimeoutRef = useRef<number | null>(null)
   const mobileRepeatTimeoutRef = useRef<number | null>(null)
   const mobileRepeatIntervalRef = useRef<number | null>(null)
+  const sessionTokenRef = useRef<string | null>(null)
+  const scoreSubmittedRef = useRef(false)
 
   useEffect(() => { boardRef.current = board }, [board])
   useEffect(() => { pieceRef.current = piece }, [piece])
@@ -271,6 +303,7 @@ export default function Tetris() {
   useEffect(() => { scoreRef.current = score }, [score])
   useEffect(() => { linesRef.current = lines }, [lines])
   useEffect(() => { gameOverRef.current = gameOver }, [gameOver])
+  useEffect(() => { sessionTokenRef.current = sessionToken }, [sessionToken])
 
   const goBack = () => {
     navigate(`/${lang}`)
@@ -297,6 +330,7 @@ export default function Tetris() {
     setScore(0)
     setLines(0)
     setGameOver(false)
+    scoreSubmittedRef.current = false
   }, [])
 
   const movePiece = useCallback((deltaX: number, deltaY: number) => {
@@ -351,10 +385,10 @@ export default function Tetris() {
     const { board: clearedBoard, clearedLines } = clearCompleteLines(lockedBoard)
 
     const nextLines = linesRef.current + clearedLines
-    const nextLevel = Math.floor(nextLines / 10) + 1
+    const nextLevel = selectedMode ? getLevelForLines(selectedMode, nextLines) : 1
 
     if (clearedLines > 0) {
-      const points = scoreForLines(clearedLines, nextLevel)
+      const points = selectedMode ? scoreForLines(clearedLines, nextLevel, selectedMode.scoreMultiplier) : scoreForLines(clearedLines, nextLevel, 1)
       linesRef.current = nextLines
       scoreRef.current += points
       setLines(nextLines)
@@ -380,7 +414,7 @@ export default function Tetris() {
 
     gameOverRef.current = true
     setGameOver(true)
-  }, [])
+  }, [selectedMode])
 
   const softDrop = useCallback(() => {
     if (movePiece(0, 1)) {
@@ -482,6 +516,91 @@ export default function Tetris() {
   }, [isPlaying, restartGame, selectedMode?.key])
 
   useEffect(() => {
+    if (!isPlaying || !selectedMode) {
+      setSessionToken(null)
+      return
+    }
+
+    sessionTokenRef.current = null
+    setSessionToken(null)
+
+    fetch('/api/game-session', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ game: 'tetris', difficulty: selectedMode.key }),
+    })
+      .then((response) => response.json())
+      .then((data: { token: string }) => {
+        sessionTokenRef.current = data.token
+        setSessionToken(data.token)
+      })
+      .catch(() => {
+        sessionTokenRef.current = null
+        setSessionToken(null)
+      })
+  }, [isPlaying, selectedMode?.key])
+
+  useEffect(() => {
+    if (!isPlaying || !gameOver || !selectedMode || scoreSubmittedRef.current || !sessionTokenRef.current) {
+      return
+    }
+
+    const submitScore = async () => {
+      scoreSubmittedRef.current = true
+      setScoreSubmitting(true)
+      try {
+        const response = await fetch('/api/leaderboard', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            token: sessionTokenRef.current,
+            username,
+            score,
+          }),
+        })
+
+        if (response.ok) {
+          const data = await response.json() as { entries: LeaderboardEntry[]; playerRank?: number; playerEntry?: LeaderboardEntry }
+          setLeaderboardEntries(data.entries)
+        }
+      } catch {
+        // Ignore submission failure; the player can retry by restarting.
+      } finally {
+        setScoreSubmitting(false)
+      }
+    }
+
+    void submitScore()
+  }, [gameOver, isPlaying, score, selectedMode?.key, username])
+
+  useEffect(() => {
+    if (!isLeaderboardPage || !selectedMode) {
+      return
+    }
+
+    let cancelled = false
+    setLeaderboardLoading(true)
+
+    fetch(`/api/leaderboard?game=tetris&difficulty=${selectedMode.key}&username=${encodeURIComponent(username)}`)
+      .then((response) => response.json())
+      .then((data: { entries: LeaderboardEntry[]; playerRank?: number; playerEntry?: LeaderboardEntry }) => {
+        if (cancelled) return
+        setLeaderboardEntries(data.entries)
+      })
+      .catch(() => {
+        if (cancelled) return
+        setLeaderboardEntries([])
+      })
+      .finally(() => {
+        if (!cancelled) setLeaderboardLoading(false)
+      })
+
+    return () => {
+      cancelled = true
+    }
+  }, [isLeaderboardPage, selectedMode?.key, username])
+
+  useEffect(() => {
     if (!isPlaying || gameOver) {
       return
     }
@@ -491,7 +610,7 @@ export default function Tetris() {
         return
       }
 
-      const dropDelay = getDropInterval(selectedMode, Math.floor(linesRef.current / 10) + 1)
+      const dropDelay = getDropInterval(selectedMode, linesRef.current)
 
       dropTimeoutRef.current = window.setTimeout(() => {
         dropTimeoutRef.current = null
@@ -657,9 +776,40 @@ export default function Tetris() {
     )
   }
 
+  if (isLeaderboardPage) {
+    return (
+      <GameFrame
+        gameName={t('tetris')}
+        onBack={() => navigate(`/${lang}/tetris/${selectedMode.key}`)}
+      >
+        <div className="tet-container tet-leaderboard-page">
+          <div className="tet-leaderboard-card">
+            <div className="tet-leaderboard-title">{t('leaderboard.title')} · {t(selectedMode.titleKey)}</div>
+
+            {leaderboardLoading ? (
+              <div className="tet-leaderboard-loading">{t('leaderboard.calculatingPlace')}</div>
+            ) : leaderboardEntries && leaderboardEntries.length > 0 ? (
+              <ol className="tet-leaderboard-list">
+                {leaderboardEntries.map((entry, index) => (
+                  <li key={`${entry.username}-${entry.date}-${index}`} className={`tet-leaderboard-item ${entry.username === username ? 'tet-leaderboard-item-you' : ''}`}>
+                    <span className="tet-leaderboard-rank">{index + 1}</span>
+                    <span className="tet-leaderboard-user">{entry.username}</span>
+                    <strong className="tet-leaderboard-score">{entry.score}</strong>
+                  </li>
+                ))}
+              </ol>
+            ) : (
+              <div className="tet-leaderboard-empty">{t('leaderboard.empty')}</div>
+            )}
+          </div>
+        </div>
+      </GameFrame>
+    )
+  }
+
   if (!isPlaying) {
     return (
-      <GameFrame gameName={t('tetris')} onBack={() => navigate(`/${lang}/tetris`)}>
+      <GameFrame gameName={t('tetris')} onBack={() => navigate(`/${lang}/tetris`)} leaderboardHref={`/${lang}/tetris/${selectedMode.key}/leaderboard`}>
         <div className="tet-container tet-setup">
           <div className="tet-setup-card">
             <h2 className="tet-setup-title">{t(selectedMode.titleKey)}</h2>
@@ -690,7 +840,7 @@ export default function Tetris() {
   }
 
   return (
-    <GameFrame gameName={t('tetris')} onBack={() => navigate(`/${lang}/tetris/${selectedMode.key}`)}>
+    <GameFrame gameName={t('tetris')} onBack={() => navigate(`/${lang}/tetris/${selectedMode.key}`)} leaderboardHref={`/${lang}/tetris/${selectedMode.key}/leaderboard`}>
       <div className="tet-container tet-play">
         <div className="tet-play-card">
           <div className="tet-play-layout">
@@ -718,6 +868,7 @@ export default function Tetris() {
                   <div className="tet-gameover-card">
                     <div className="tet-gameover-title">{t('game.over')}</div>
                     <div className="tet-gameover-score">{score}</div>
+                    {scoreSubmitting ? <div className="tet-gameover-submitting">{t('leaderboard.calculatingPlace')}</div> : null}
                     <button className="tet-start-button tet-primary-button" onClick={restartGame} type="button">
                       {t('btn.reset')}
                     </button>

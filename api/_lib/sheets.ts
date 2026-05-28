@@ -2,8 +2,19 @@ import { google } from 'googleapis'
 
 export interface LeaderboardEntry {
   username: string
-  time: number
+  time?: number
+  score?: number
   date: string
+}
+
+const SCORE_GAMES = new Set(['tetris'])
+
+function getLeaderboardField(game: string): 'time' | 'score' {
+  return SCORE_GAMES.has(game) ? 'score' : 'time'
+}
+
+function getEntryValue(game: string, row: string[]): number {
+  return parseFloat(String(row[1]))
 }
 
 function getAuth() {
@@ -39,21 +50,42 @@ export async function readLeaderboard(
     .filter((row) => row[0] && row[1])
     .map((row) => ({
       username: String(row[0]),
-      time: parseFloat(String(row[1])),
+      value: getEntryValue(game, row),
       date: String(row[2] ?? new Date().toISOString()),
     }))
-    .filter((entry) => !isNaN(entry.time))
+    .filter((entry) => !isNaN(entry.value))
 
   // Keep only each player's personal best
   const bestByUser = new Map<string, LeaderboardEntry>()
   for (const entry of parsed) {
     const existing = bestByUser.get(entry.username)
-    if (!existing || entry.time < existing.time) {
-      bestByUser.set(entry.username, entry)
+    if (!existing) {
+      bestByUser.set(entry.username, {
+        username: entry.username,
+        [getLeaderboardField(game)]: entry.value,
+        date: entry.date,
+      })
+      continue
+    }
+
+    const existingValue = existing.time ?? existing.score ?? Number.POSITIVE_INFINITY
+    const isScoreGame = SCORE_GAMES.has(game)
+    const isBetter = isScoreGame ? entry.value > existingValue : entry.value < existingValue
+    if (isBetter) {
+      bestByUser.set(entry.username, {
+        username: entry.username,
+        [getLeaderboardField(game)]: entry.value,
+        date: entry.date,
+      })
     }
   }
 
-  const all = Array.from(bestByUser.values()).sort((a, b) => a.time - b.time)
+  const isScoreGame = SCORE_GAMES.has(game)
+  const all = Array.from(bestByUser.values()).sort((a, b) => {
+    const aValue = a.time ?? a.score ?? 0
+    const bValue = b.time ?? b.score ?? 0
+    return isScoreGame ? bValue - aValue : aValue - bValue
+  })
   const entries = all.slice(0, 15)
 
   if (!options?.username) return { entries }
@@ -68,7 +100,7 @@ export async function appendScore(
   game: string,
   difficulty: string,
   username: string,
-  time: number,
+  value: number,
   date: string,
 ): Promise<void> {
   const auth = getAuth()
@@ -77,6 +109,6 @@ export async function appendScore(
     spreadsheetId: process.env.GOOGLE_SPREADSHEET_ID!,
     range: `${game}-${difficulty}!A:C`,
     valueInputOption: 'RAW',
-    requestBody: { values: [[username, time, date]] },
+    requestBody: { values: [[username, value, date]] },
   })
 }

@@ -55,15 +55,24 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
   }
 
   if (req.method === 'POST') {
-    const { token, username, time } = (req.body ?? {}) as Record<string, unknown>
-    if (typeof token !== 'string' || typeof time !== 'number') {
-      return res.status(400).json({ error: 'token and time are required' })
+    const { token, username, time, score } = (req.body ?? {}) as Record<string, unknown>
+    if (typeof token !== 'string') {
+      return res.status(400).json({ error: 'token is required' })
     }
     const payload = verifyToken(token)
     if (!payload) {
       return res.status(401).json({ error: 'Invalid or expired token' })
     }
-    if (time < 0.5 || time > 7200) {
+    const isScoreGame = payload.game === 'tetris'
+    const rawValue = isScoreGame ? score : time
+    if (typeof rawValue !== 'number') {
+      return res.status(400).json({ error: isScoreGame ? 'score is required' : 'time is required' })
+    }
+    if (isScoreGame) {
+      if (!Number.isInteger(rawValue) || rawValue < 0 || rawValue > 1_000_000) {
+        return res.status(400).json({ error: 'Score out of plausible range' })
+      }
+    } else if (rawValue < 0.5 || rawValue > 7200) {
       return res.status(400).json({ error: 'Time out of plausible range' })
     }
 
@@ -83,7 +92,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     const date = new Date().toISOString()
     try {
       if (safeUsername) {
-        await appendScore(payload.game, payload.difficulty, safeUsername, time, date)
+        await appendScore(payload.game, payload.difficulty, safeUsername, rawValue, date)
       }
       const result = await readLeaderboard(
         payload.game,
