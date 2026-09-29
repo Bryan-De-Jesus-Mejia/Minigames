@@ -1,7 +1,10 @@
 import { useState } from 'react'
+import { useLanguage } from '../context/language'
 import { useUsername } from '../hooks/useUsername'
+import './UsernameInput.css'
 
 export function UsernameInput() {
+  const { t } = useLanguage()
   const { username, setUsername } = useUsername()
   const [editing, setEditing] = useState(false)
   const [draft, setDraft] = useState('')
@@ -14,7 +17,7 @@ export function UsernameInput() {
           setDraft(username)
           setEditing(true)
         }}
-        title="Click to change your display name"
+        title={t('username.edit')}
         type="button"
       >
         {username}
@@ -22,13 +25,17 @@ export function UsernameInput() {
     )
   }
 
+  const commit = () => {
+    setUsername(draft)
+    setEditing(false)
+  }
+
   return (
     <form
       className="username-form"
-      onSubmit={(e) => {
-        e.preventDefault()
-        setUsername(draft)
-        setEditing(false)
+      onSubmit={(event) => {
+        event.preventDefault()
+        commit()
       }}
     >
       <input
@@ -36,13 +43,21 @@ export function UsernameInput() {
         autoFocus
         maxLength={30}
         value={draft}
-        onChange={(e) => setDraft(e.target.value)}
-        onBlur={() => {
-          setUsername(draft)
-          setEditing(false)
-        }}
-        placeholder="Your name"
+        onChange={(event) => setDraft(event.target.value)}
+        onBlur={commit}
+        placeholder={t('username.placeholder')}
       />
     </form>
+  )
+}
+
+/** Labelled variant used by the game menus. */
+export function UsernameField() {
+  const { t } = useLanguage()
+  return (
+    <div className="username-field">
+      <span className="username-field-label">{t('username.label')}</span>
+      <UsernameInput />
+    </div>
   )
 }

@@ -1,0 +1,105 @@
+/* End-of-game panel. Minesweeper and Memory duplicated it as a fixed overlay;
+   Tetris duplicated it again as a card pinned inside the board. */
+
+.result-overlay {
+  position: fixed;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  z-index: 1000;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 6px;
+  background: rgba(0, 0, 0, 0.9);
+  color: var(--text);
+  border: 2px solid var(--border);
+  padding: 24px 32px;
+  text-align: center;
+  pointer-events: all;
+}
+
+.result-overlay--success {
+  background: var(--win-bg);
+  border-color: var(--win-border);
+}
+
+/* Anchored to the nearest positioned ancestor instead of the viewport. */
+.result-overlay--inset {
+  position: absolute;
+  inset: 0;
+  top: auto;
+  left: auto;
+  transform: none;
+  justify-content: center;
+  background: rgba(26, 26, 26, 0.72);
+  border: 0;
+  padding: 16px;
+}
+
+.result-overlay--inset .result-panel {
+  width: 100%;
+  max-width: 240px;
+  border: 1px solid var(--border);
+  background: var(--surface);
+  padding: 18px;
+}
+
+.result-panel {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 6px;
+}
+
+.result-title {
+  font-size: 2rem;
+  font-weight: 700;
+}
+
+.result-overlay--inset .result-title {
+  font-size: 1rem;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.result-detail {
+  font-size: 1.2rem;
+  font-variant-numeric: tabular-nums;
+  font-feature-settings: 'tnum' 1;
+}
+
+.result-overlay--inset .result-detail {
+  color: var(--text-muted);
+  font-size: 1rem;
+}
+
+.result-pending {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  margin-top: 8px;
+  font-size: 1rem;
+  opacity: 0.9;
+}
+
+.result-overlay--inset .result-pending {
+  font-size: 0.82rem;
+  opacity: 1;
+  color: var(--text-dim);
+}
+
+.result-rank {
+  font-size: 1.2rem;
+  margin-top: 6px;
+  opacity: 0.85;
+}
+
+.result-actions {
+  display: flex;
+  gap: 8px;
+  margin-top: 12px;
+  width: 100%;
+  justify-content: center;
+}

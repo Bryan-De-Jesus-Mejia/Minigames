@@ -1,0 +1,264 @@
+/* One leaderboard for every game. Minesweeper, Memory and Tetris each shipped a
+   prefixed copy of these rules on top of the shared file. */
+
+.lb-page {
+  justify-content: center;
+  align-items: center;
+  overflow-y: auto;
+  overflow-x: hidden;
+  min-height: 0;
+  width: 100%;
+  position: relative;
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}
+
+.lb-card {
+  width: min(100%, 620px);
+  max-height: calc(100dvh - 170px);
+  overflow-y: auto;
+  overflow-x: hidden;
+  border: 1px solid var(--border);
+  background: var(--surface);
+  padding: 20px;
+  text-align: left;
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}
+
+.lb-page::-webkit-scrollbar,
+.lb-card::-webkit-scrollbar {
+  width: 0;
+  height: 0;
+}
+
+.lb-title {
+  margin: 0 0 8px;
+  font-size: clamp(1rem, 2.4vw, 1.6rem);
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  text-align: center;
+}
+
+.lb-meta {
+  margin-bottom: 14px;
+  color: var(--text-muted);
+  font-size: 0.92rem;
+  text-align: center;
+}
+
+.lb-layout {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+/* ── Podium ── */
+
+.lb-podium {
+  display: flex;
+  width: 100%;
+  min-width: 0;
+  justify-content: space-between;
+  gap: 10px;
+  align-items: flex-end;
+}
+
+.lb-podium-slot {
+  display: flex;
+  flex: 1 1 0;
+  min-width: 0;
+  flex-direction: column;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 8px;
+  border: 1px solid var(--border);
+  background: linear-gradient(180deg, var(--hover) 0%, var(--surface) 100%);
+  padding: 16px 12px;
+  text-align: center;
+}
+
+.lb-podium-1 {
+  order: 2;
+  min-height: 196px;
+  border-color: var(--accent-soft);
+  background: linear-gradient(180deg, rgba(241, 208, 138, 0.22) 0%, var(--surface) 100%);
+}
+
+.lb-podium-2 {
+  order: 1;
+  min-height: 182px;
+  border-color: var(--silver);
+}
+
+.lb-podium-3 {
+  order: 3;
+  min-height: 128px;
+  border-color: var(--bronze);
+}
+
+.lb-podium-place {
+  font-size: 1rem;
+  font-weight: 800;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.lb-podium-name {
+  font-size: 0.92rem;
+  font-weight: 700;
+  color: #ececec;
+  max-width: 100%;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.lb-podium-value {
+  font-size: clamp(1rem, 2vw, 1.3rem);
+  font-weight: 800;
+  width: 100%;
+  max-width: 11ch;
+  text-align: center;
+}
+
+.lb-podium-date {
+  width: 100%;
+  max-width: 10ch;
+  text-align: center;
+  color: var(--text-faint);
+  font-size: 0.82rem;
+}
+
+/* ── Ranked list ── */
+
+.lb-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  gap: 8px;
+}
+
+.lb-row {
+  display: grid;
+  grid-template-columns: 56px minmax(0, 1fr) 11ch 10ch;
+  gap: 10px;
+  align-items: center;
+  border: 1px solid var(--border);
+  background: var(--surface-3);
+  padding: 10px 12px;
+}
+
+.lb-row-you {
+  border-color: var(--border-strong);
+  background: var(--surface-4);
+}
+
+.lb-rank {
+  color: var(--accent-soft);
+  font-weight: 700;
+  text-align: left;
+}
+
+.lb-name {
+  color: var(--text-soft);
+  font-weight: 600;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  text-align: left;
+}
+
+.lb-value {
+  font-weight: 700;
+  text-align: right;
+}
+
+.lb-date {
+  color: var(--text-faint);
+  font-size: 0.85rem;
+  text-align: right;
+}
+
+.lb-separator {
+  color: var(--text-dim);
+  text-align: center;
+  letter-spacing: 0.2em;
+  padding: 4px 0;
+}
+
+.lb-empty {
+  color: var(--text-dim);
+  font-size: 0.95rem;
+  text-align: center;
+}
+
+.lb-loading {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  color: var(--text-muted);
+  font-size: 0.95rem;
+}
+
+@media (max-width: 600px) {
+  .lb-card {
+    padding: 16px;
+    max-height: calc(100dvh - 150px);
+  }
+
+  .lb-meta {
+    margin-bottom: 12px;
+  }
+
+  .lb-podium {
+    gap: 8px;
+  }
+
+  .lb-podium-slot {
+    padding: 14px 10px;
+  }
+
+  .lb-row {
+    gap: 8px;
+    padding: 10px 11px;
+  }
+}
+
+@media (max-width: 420px) {
+  .lb-podium {
+    display: grid;
+    grid-template-columns: 1fr;
+  }
+
+  .lb-podium-slot,
+  .lb-podium-1,
+  .lb-podium-2,
+  .lb-podium-3 {
+    order: initial;
+    min-height: 0;
+  }
+
+  .lb-row {
+    grid-template-columns: 48px minmax(0, 1fr);
+  }
+
+  .lb-value,
+  .lb-date {
+    grid-column: 1 / -1;
+  }
+}
+
+@media (min-width: 1000px) {
+  .lb-card {
+    max-height: calc(100dvh - 200px);
+  }
+
+  .lb-podium {
+    gap: 14px;
+  }
+}

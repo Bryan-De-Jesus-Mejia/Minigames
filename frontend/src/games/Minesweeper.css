@@ -1,325 +1,16 @@
-.ms-container {
-  width: 100%;
-  height: 100%;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  padding: clamp(16px, 4vw, 48px);
-  background: #1a1a1a;
-  color: #fff;
-  overflow: hidden;
-}
-
-.ms-menu {
-  justify-content: center;
-}
-
-.ms-menu-card {
-  width: min(100%, 540px);
-  border: 1px solid #2a2a2a;
-  background: #1f1f1f;
-  padding: 20px;
-}
-
-.ms-leaderboard-page {
-  justify-content: center;
-  align-items: center;
-  overflow-y: auto;
-  overflow-x: hidden;
-  min-height: 0;
-  width: 100%;
-  position: relative;
-  -ms-overflow-style: none;
-  scrollbar-width: none;
-}
-
-.ms-leaderboard-card {
-  width: min(100%, 620px);
-  max-height: calc(100dvh - 170px);
-  overflow-y: auto;
-  overflow-x: hidden;
-  -ms-overflow-style: none;
-  scrollbar-width: none;
-}
-
-.ms-leaderboard-page::-webkit-scrollbar,
-.ms-leaderboard-card::-webkit-scrollbar {
-  width: 0;
-  height: 0;
-}
-
-.ms-leaderboard-meta {
-  margin-bottom: 14px;
-  color: #c8c8c8;
-  font-size: 0.92rem;
-}
-
-.ms-leaderboard-layout {
-  display: flex;
-  flex-direction: column;
-  gap: 16px;
-}
-
-.ms-podium {
-  display: flex;
-  width: 100%;
-  min-width: 0;
-  justify-content: space-between;
-  gap: 10px;
-  align-items: flex-end;
-}
-
-.ms-podium-slot {
-  display: flex;
-  flex: 1 1 0;
-  min-width: 0;
-  box-sizing: border-box;
-  flex-direction: column;
-  align-items: center;
-  justify-content: flex-end;
-  gap: 8px;
-  border: 1px solid #2a2a2a;
-  background: linear-gradient(180deg, #2a2a2a 0%, #1f1f1f 100%);
-  padding: 16px 12px;
-  text-align: center;
-}
-
-.ms-podium-1 {
-  min-height: 196px;
-  order: 2;
-  margin-bottom: 0;
-  border-color: #f1d08a;
-  background: linear-gradient(180deg, rgba(241, 208, 138, 0.22) 0%, rgba(31, 31, 31, 1) 100%);
-}
-
-.ms-podium-2 {
-  order: 1;
-  min-height: 182px;
-  border-color: #7d8793;
-}
-
-.ms-podium-3 {
-  order: 3;
-  min-height: 128px;
-  border-color: #b87333;
-}
-
-.ms-podium-place {
-  font-size: 1rem;
-  font-weight: 800;
-  letter-spacing: 0.08em;
-  text-transform: uppercase;
-}
-
-.ms-podium-username {
-  font-size: 0.92rem;
-  font-weight: 700;
-  color: #ececec;
-  max-width: 100%;
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
-}
-
-.ms-podium-time {
-  font-size: clamp(1rem, 2vw, 1.3rem);
-  font-weight: 800;
-  width: 100%;
-  max-width: 11ch;
-  text-align: center;
-  font-variant-numeric: tabular-nums;
-  font-feature-settings: 'tnum' 1;
-}
-
-.ms-podium-date {
-  width: 100%;
-  max-width: 10ch;
-  text-align: center;
-  color: #bcbcbc;
-  font-size: 0.82rem;
-  font-variant-numeric: tabular-nums;
-  font-feature-settings: 'tnum' 1;
-}
-
-.ms-leaderboard-list {
-  list-style: none;
-  margin: 0;
-  padding: 0;
-  display: grid;
-  gap: 8px;
-}
-
-.ms-leaderboard-item {
-  display: grid;
-  grid-template-columns: 56px minmax(0, 1fr) 11ch 10ch;
-  gap: 10px;
-  align-items: center;
-  border: 1px solid #2a2a2a;
-  background: #232323;
-  padding: 10px 12px;
-}
-
-.ms-rank {
-  color: #f1d08a;
-  font-weight: 700;
-}
-
-.ms-score-time {
-  font-weight: 700;
-  text-align: right;
-  font-variant-numeric: tabular-nums;
-  font-feature-settings: 'tnum' 1;
-}
-
-.ms-score-user {
-  color: #e8e8e8;
-  font-weight: 600;
-  min-width: 0;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-}
-
-.ms-score-date {
-  color: #bcbcbc;
-  font-size: 0.85rem;
-  text-align: right;
-  font-variant-numeric: tabular-nums;
-  font-feature-settings: 'tnum' 1;
-}
-
-.ms-leaderboard-empty {
-  color: #9f9f9f;
-  font-size: 0.95rem;
-}
-
-.ms-menu-title {
-  font-size: clamp(1rem, 2.4vw, 1.6rem);
-  font-weight: 700;
-  letter-spacing: 0.08em;
-  text-transform: uppercase;
-  margin-bottom: 16px;
-}
-
-.ms-menu-username {
-  margin-bottom: 16px;
-  display: flex;
-  flex-direction: column;
-  gap: 6px;
-}
-
-.ms-menu-username-label {
-  font-size: 0.78rem;
-  color: #9f9f9f;
-  text-transform: uppercase;
-  letter-spacing: 0.06em;
-}
-
-.ms-menu-username .username-display {
-  max-width: 100%;
-  width: 100%;
-  text-align: left;
-  font-size: 0.95rem;
-  padding: 10px 14px;
-}
-
-.ms-menu-username .username-input {
-  width: 100%;
-  font-size: 0.95rem;
-  padding: 10px 14px;
-}
-
-.ms-menu-username .username-form {
-  width: 100%;
-}
-
-.ms-menu-list {
-  display: flex;
-  flex-direction: column;
-  gap: 10px;
-}
-
-.ms-menu-button {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  width: 100%;
-  padding: 14px 16px;
-  border: 1px solid #2a2a2a;
-  background: #222;
-  color: #fff;
-  cursor: pointer;
-  font-size: 0.95rem;
-}
-
-.ms-menu-button:hover {
-  background: #282828;
-  border-color: #3a3a3a;
-}
-
-.ms-header {
-  width: 100%;
-  max-width: 1100px;
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  margin-bottom: 18px;
-  gap: 12px;
-  flex-direction: column;
-}
+/* Only what is unique to Minesweeper. The page shell, HUD, buttons, menu card,
+   leaderboard and overlays all come from the shared styles. */
 
 .ms-board {
   width: 100%;
   display: flex;
   justify-content: center;
-}
-
-.ms-board.compact {
-  overflow: hidden;
-}
-
-.ms-board.scrollable {
   overflow: auto;
   max-width: 100%;
-  /* allow the board to use most of the viewport but leave space for header/controls */
+  /* Leave room for the frame header and the HUD above the board. */
   max-height: calc(100vh - 140px);
-  background: transparent; /* container stays default, grid draws seams */
   padding: 8px 0;
   -webkit-overflow-scrolling: touch;
-}
-
-.ms-info {
-  font-weight: 600;
-  text-align: center;
-  font-size: clamp(0.9rem, 1.2vw, 1.05rem);
-}
-
-.ms-timer {
-  display: inline-block;
-  min-width: 7.5ch;
-  text-align: left;
-  font-variant-numeric: tabular-nums;
-  font-feature-settings: 'tnum' 1;
-}
-
-.ms-controls {
-  display: flex;
-  gap: 8px;
-  justify-content: center;
-}
-
-.ms-btn {
-  background: transparent;
-  border: 1px solid #2a2a2a;
-  color: #fff;
-  padding: 6px 10px;
-  cursor: pointer;
-}
-
-.ms-btn.active {
-  background: rgba(255, 215, 0, 0.1);
-  border-color: #ffd700;
-  color: #ffd700;
 }
 
 .ms-grid {
@@ -336,26 +27,31 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  background: #222;
-  border: none; /* remove per-cell borders to keep seam size consistent */
+  background: var(--surface-2);
   font-weight: 700;
-  cursor: pointer;
   font-size: clamp(12px, 1.6vw, 16px);
+  cursor: pointer;
 }
 
 .ms-cell.revealed {
   background: #e9e9e9;
-  color: #111;
+  color: #111111;
   cursor: default;
 }
 
 .ms-cell.mine.revealed {
-  background: #ff4d4f;
-  color: #fff;
+  background: var(--danger);
+  color: var(--text);
 }
 
 .ms-cell.flagged {
-  color: #ffd700;
+  color: var(--accent);
+}
+
+.ms-flag-icon {
+  width: 60%;
+  height: 60%;
+  color: var(--accent);
 }
 
 .num-1 { color: #0b5cff; }
@@ -364,207 +60,21 @@
 .num-4 { color: #8b2bff; }
 .num-5 { color: #cf3c00; }
 .num-6 { color: #00a2a2; }
-.num-7 { color: #000; }
-.num-8 { color: #666; }
+.num-7 { color: #000000; }
+.num-8 { color: #666666; }
 
-.ms-flag-icon {
-  width: 60%;
-  height: 60%;
-  color: #ffd700;
-}
-
-
-
-.ms-overlay {
-  position: fixed;
-  top: 50%;
-  left: 50%;
-  transform: translate(-50%, -50%);
-  background: rgba(0,0,0,0.9);
-  color: #fff;
-  padding: 24px 32px;
-  border: 2px solid #2a2a2a;
-  font-size: 2rem;
-  font-weight: 700;
-  text-align: center;
-  z-index: 1000;
-}
-
-.ms-overlay.success {
-  background: rgba(0,120,0,0.9);
-  border-color: #00aa00;
-}
-
-.ms-overlay-blocking {
-  pointer-events: all;
-}
-
-.ms-overlay-loading {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  gap: 10px;
-  margin-top: 8px;
-  font-size: 1rem;
-  opacity: 0.9;
-}
-
-.ms-loading-spinner {
-  width: 12px;
-  height: 12px;
-  border-radius: 50%;
-  border: 2px solid rgba(255, 255, 255, 0.28);
-  border-top-color: #f1d08a;
-  animation: ms-spin 0.8s linear infinite;
-  flex-shrink: 0;
-}
-
-.ms-overlay-rank {
-  font-size: 1.2rem;
-  margin-top: 6px;
-  opacity: 0.85;
-}
-
-@keyframes ms-spin {
-  to {
-    transform: rotate(360deg);
-  }
-}
-
-.ms-leaderboard-separator {
-  text-align: center;
-  color: #555;
-  font-size: 0.9rem;
-  letter-spacing: 0.3em;
-  padding: 4px 0;
-}
-
-.ms-leaderboard-item-you {
-  border-color: #4a4a2a;
-  background: #2a2a1a;
-}
-
-.ms-leaderboard-item-you .ms-rank {
-  color: #f0c040;
-}
-
-.ms-leaderboard-item-you .ms-score-user {
-  color: #f0e080;
-}
-
-@media (max-width: 420px) {
-  .ms-container {
-    padding: 16px;
-  }
-
-  .ms-header {
-    max-width: 100%;
-    flex-direction: column;
-    align-items: flex-start;
-  }
-
-  .ms-controls {
-    width: 100%;
-  }
-
-  .ms-btn {
-    flex: 1;
-  }
-
-  .ms-menu-card {
-    padding: 16px;
-  }
-
-  .ms-leaderboard-card {
-    max-height: calc(100dvh - 150px);
-  }
-
-  .ms-menu-button {
-    padding: 12px 14px;
-  }
-
-  .ms-podium {
-    display: grid;
-    grid-template-columns: 1fr;
-  }
-
-  .ms-podium-slot {
-    min-height: 0;
-  }
-
-  .ms-podium-1,
-  .ms-podium-2,
-  .ms-podium-3 {
-    order: initial;
-  }
-
-  .ms-podium-1 {
-    min-height: 0;
-  }
-
-  .ms-podium-2 {
-    min-height: 0;
-  }
-
-  .ms-podium-3 {
-    min-height: 0;
-  }
-
-  .ms-leaderboard-item {
-    grid-template-columns: 48px minmax(0, 1fr);
-  }
-
-  .ms-score-time,
-  .ms-score-date {
-    grid-column: 1 / -1;
-  }
-}
-
-
-/* Larger screens: make header and board more prominent */
 @media (min-width: 1000px) {
-  .ms-container { padding: 40px 80px; }
-  .ms-header { margin-bottom: 24px; }
-  .ms-board.scrollable { max-height: calc(100vh - 160px); }
-  .ms-grid { gap: 3px; }
-  .ms-menu-card { width: 520px; }
-  .ms-podium { gap: 14px; }
-  .ms-leaderboard-card { max-height: calc(100dvh - 200px); }
+  .ms-board {
+    max-height: calc(100vh - 160px);
+  }
+
+  .ms-grid {
+    gap: 3px;
+  }
 }
 
 @media (min-width: 1400px) {
-  .ms-container { padding: 56px 120px; }
-  .ms-header { max-width: 1400px; }
-  .ms-grid { gap: 4px; }
-}
-
-.ms-username-notice {
-  width: 100%;
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 12px;
-  background: #2a2000;
-  border: 1px solid #554400;
-  color: #f0c040;
-  padding: 8px 14px;
-  font-size: 0.82rem;
-  margin-bottom: 8px;
-  border-radius: 4px;
-}
-
-.ms-notice-dismiss {
-  background: transparent;
-  border: none;
-  color: #f0c040;
-  cursor: pointer;
-  font-size: 0.9rem;
-  padding: 0 2px;
-  line-height: 1;
-  flex-shrink: 0;
-  opacity: 0.7;
-}
-
-.ms-notice-dismiss:hover {
-  opacity: 1;
+  .ms-grid {
+    gap: 4px;
+  }
 }

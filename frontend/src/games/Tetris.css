@@ -1,128 +1,5 @@
-.tet-container {
-  width: 100%;
-  height: 100%;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  padding: clamp(16px, 4vw, 48px);
-  color: #fff;
-  overflow: auto;
-  -webkit-overflow-scrolling: touch;
-  background: #1a1a1a;
-}
-
-.tet-menu,
-.tet-setup {
-  justify-content: center;
-}
-
-.tet-menu-card,
-.tet-setup-card {
-  width: min(100%, 540px);
-  border: 1px solid #2a2a2a;
-  background: #1f1f1f;
-  padding: 20px;
-}
-
-.tet-menu-title,
-.tet-setup-title {
-  margin: 0;
-  font-size: clamp(1rem, 2.4vw, 1.6rem);
-  font-weight: 700;
-  letter-spacing: 0.08em;
-  text-transform: uppercase;
-}
-
-.tet-menu-username {
-  margin-top: 18px;
-  margin-bottom: 18px;
-  display: flex;
-  flex-direction: column;
-  gap: 6px;
-  align-items: flex-start;
-}
-
-.tet-menu-username-label {
-  font-size: 0.78rem;
-  color: #9f9f9f;
-  text-transform: uppercase;
-  letter-spacing: 0.06em;
-  width: 100%;
-  text-align: center;
-}
-
-.tet-menu-username .username-display,
-.tet-menu-username .username-input,
-.tet-menu-username .username-form {
-  width: 100%;
-  max-width: none;
-}
-
-.tet-menu-username .username-display {
-  text-align: left;
-  font-size: 0.95rem;
-  padding: 10px 14px;
-}
-
-.tet-menu-username .username-input {
-  font-size: 0.95rem;
-  padding: 10px 14px;
-}
-
-.tet-menu-username .username-form {
-  width: 100%;
-}
-
-.tet-mode-list {
-  display: grid;
-  grid-template-columns: 1fr;
-  gap: 12px;
-}
-
-.tet-mode-button {
-  display: flex;
-  flex-direction: row;
-  align-items: center;
-  justify-content: space-between;
-  gap: 16px;
-  min-height: 0;
-  padding: 14px 16px;
-  border: 1px solid #2a2a2a;
-  background: #222;
-  color: #fff;
-  text-align: left;
-  cursor: pointer;
-  transition: background 0.2s ease, border-color 0.2s ease;
-}
-
-.tet-mode-button:hover {
-  background: #282828;
-  border-color: #3a3a3a;
-}
-
-.tet-mode-name {
-  flex: 0 0 auto;
-  font-size: 0.95rem;
-  font-weight: 700;
-  letter-spacing: 0.02em;
-}
-
-.tet-mode-summary {
-  flex: 1 1 auto;
-  color: #d0d0d0;
-  line-height: 1.45;
-  font-size: 0.92rem;
-  text-align: right;
-}
-
-.tet-setup-note {
-  margin-top: 18px;
-  padding: 10px 12px;
-  border: 1px solid #2a2a2a;
-  background: #222;
-  color: #c8c8c8;
-  font-size: 0.88rem;
-}
+/* Only what is unique to Tetris: the setup control list, the board, the piece
+   previews, the sidebar and the touch pad. */
 
 .tet-control-grid {
   margin-top: 18px;
@@ -134,7 +11,7 @@
   font-size: 0.78rem;
   letter-spacing: 0.06em;
   text-transform: uppercase;
-  color: #9f9f9f;
+  color: var(--text-dim);
 }
 
 .tet-control-row {
@@ -143,8 +20,8 @@
   gap: 12px;
   align-items: center;
   padding: 12px 14px;
-  border: 1px solid #2a2a2a;
-  background: #222;
+  border: 1px solid var(--border);
+  background: var(--surface-2);
 }
 
 .tet-control-label {
@@ -152,8 +29,7 @@
 }
 
 .tet-control-value {
-  color: #f1d08a;
-  font-variant-numeric: tabular-nums;
+  color: var(--accent-soft);
   white-space: nowrap;
 }
 
@@ -165,86 +41,13 @@
   justify-content: center;
 }
 
-.tet-back-button,
-.tet-primary-button {
-  border: 1px solid #2a2a2a;
-  padding: 10px 14px;
-  font-size: 0.92rem;
-  cursor: pointer;
-}
-
-.tet-back-button {
-  background: transparent;
-  color: #fff;
-}
-
-.tet-back-button:hover {
-  border-color: #3a3a3a;
-  background: #2a2a2a;
-}
-
-.tet-primary-button {
-  background: #2a2a2a;
-  color: #fff;
-  font-weight: 600;
-  cursor: not-allowed;
-  opacity: 1;
-}
-
-.tet-start-button.tet-primary-button {
-  cursor: pointer;
-}
-
-.tet-start-button {
-  padding: 10px 14px;
-  font-size: 0.92rem;
-  min-width: 160px;
-  border-radius: 0;
-  background: transparent;
-  border: 1px solid #2a2a2a;
-  color: #fff;
-  font-weight: 600;
-  cursor: pointer;
-}
-
-.tet-start-button:hover {
-  background: #2a2a2a;
-  border-color: #3a3a3a;
-}
-
-@media (max-width: 600px) {
-  .tet-start-button {
-    width: 100%;
-    min-width: 0;
-    padding: 14px 16px;
-    font-size: 1rem;
-  }
-}
-
-.tet-play {
-  justify-content: center;
-}
+/* ── Play screen ── */
 
 .tet-play-card {
   width: min(100%, 1080px);
-  border: 1px solid #2a2a2a;
-  background: #1f1f1f;
+  border: 1px solid var(--border);
+  background: var(--surface);
   padding: 20px;
-}
-
-.tet-play-kicker {
-  color: #9f9f9f;
-  font-size: 0.78rem;
-  letter-spacing: 0.06em;
-  text-transform: uppercase;
-}
-
-.tet-play-title {
-  margin: 2px 0 0;
-  font-size: clamp(1rem, 2.4vw, 1.6rem);
-  font-weight: 700;
-  letter-spacing: 0.08em;
-  text-transform: uppercase;
 }
 
 .tet-play-layout {
@@ -253,6 +56,21 @@
   gap: 16px;
   align-items: center;
   justify-content: center;
+}
+
+.tet-play-kicker {
+  color: var(--text-dim);
+  font-size: 0.78rem;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+
+.tet-play-title {
+  margin: 4px 0 0;
+  font-size: clamp(1rem, 2.4vw, 1.6rem);
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
 }
 
 .tet-board-shell {
@@ -271,11 +89,12 @@
   grid-template-rows: repeat(20, 1fr);
   gap: 1px;
   padding: 1px;
-  background: #2a2a2a;
-  border: 1px solid #2a2a2a;
+  background: var(--border);
+  border: 1px solid var(--border);
 }
 
-.tet-cell {
+.tet-cell,
+.tet-preview-cell {
   background: #1b1b1b;
   border: 1px solid #252525;
 }
@@ -291,181 +110,14 @@
   box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.06);
 }
 
-.tet-gameover-overlay {
-  position: absolute;
-  inset: 0;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  background: rgba(26, 26, 26, 0.72);
-  padding: 16px;
-}
-
-.tet-gameover-card {
-  width: 100%;
-  max-width: 240px;
-  border: 1px solid #2a2a2a;
-  background: #1f1f1f;
-  padding: 18px;
-  text-align: center;
-}
-
-.tet-gameover-title {
-  font-size: 1rem;
-  font-weight: 700;
-  letter-spacing: 0.08em;
-  text-transform: uppercase;
-}
-
-.tet-gameover-score {
-  margin: 10px 0 14px;
-  color: #c8c8c8;
-  font-variant-numeric: tabular-nums;
-}
-
-.tet-gameover-submitting {
-  margin: -6px 0 12px;
-  color: #9f9f9f;
-  font-size: 0.82rem;
-}
-
-.tet-leaderboard-page {
-  justify-content: center;
-  align-items: center;
-  overflow-y: auto;
-  overflow-x: hidden;
-  min-height: 0;
-  width: 100%;
-  -ms-overflow-style: none;
-  scrollbar-width: none;
-}
-
-.tet-leaderboard-card {
-  width: min(100%, 620px);
-  max-height: calc(100dvh - 170px);
-  overflow-y: auto;
-  overflow-x: hidden;
-  border: 1px solid #2a2a2a;
-  background: #1f1f1f;
-  padding: 20px;
-  -ms-overflow-style: none;
-  scrollbar-width: none;
-}
-
-.tet-leaderboard-page::-webkit-scrollbar,
-.tet-leaderboard-card::-webkit-scrollbar {
-  width: 0;
-  height: 0;
-}
-
-.tet-leaderboard-title {
-  margin: 0;
-  font-size: clamp(1rem, 2.4vw, 1.6rem);
-  font-weight: 700;
-  letter-spacing: 0.08em;
-  text-transform: uppercase;
-}
-
-.tet-leaderboard-meta {
-  margin: 8px 0 14px;
-  display: flex;
-  justify-content: center;
-  gap: 12px;
-  color: #c8c8c8;
-  font-size: 0.92rem;
-}
-
-.tet-leaderboard-loading,
-.tet-leaderboard-empty {
-  margin-top: 0;
-  padding: 0;
-  border: 0;
-  background: transparent;
-  color: #c8c8c8;
-  text-align: left;
-}
-
-.tet-leaderboard-list {
-  margin: 18px 0 0;
-  padding: 0;
-  list-style: none;
-  display: grid;
-  gap: 10px;
-}
-
-.tet-leaderboard-item,
-.tet-leaderboard-you {
-  display: grid;
-  grid-template-columns: auto 1fr auto;
-  gap: 12px;
-  align-items: center;
-  padding: 12px 14px;
-  border: 1px solid #2a2a2a;
-  background: #222;
-}
-
-.tet-leaderboard-item-you,
-.tet-leaderboard-you {
-  border-color: #3a3a3a;
-  background: #262626;
-}
-
-.tet-leaderboard-rank {
-  color: #f1d08a;
-  font-variant-numeric: tabular-nums;
-  min-width: 2ch;
-}
-
-.tet-leaderboard-user {
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-}
-
-.tet-leaderboard-score {
-  font-variant-numeric: tabular-nums;
-}
-
-.tet-leaderboard-you {
-  margin-top: 14px;
-}
-
-.tet-mobile-controls {
-  display: none;
-  width: 100%;
-  grid-template-columns: repeat(3, minmax(0, 1fr));
-  gap: 8px;
-  margin-top: 14px;
-}
-
-.tet-mobile-control {
-  border: 1px solid #2a2a2a;
-  background: #222;
-  color: #fff;
-  padding: 12px 10px;
-  font-size: 0.92rem;
-  font-weight: 600;
-  cursor: pointer;
-  touch-action: manipulation;
-  user-select: none;
-}
-
-.tet-mobile-control:hover,
-.tet-mobile-control:active {
-  background: #2a2a2a;
-  border-color: #3a3a3a;
-}
-
-.tet-mobile-control-wide {
-  grid-column: span 3;
-}
+/* ── Sidebar ── */
 
 .tet-sidebar {
   display: flex;
   flex-direction: column;
   gap: 12px;
-  border: 1px solid #2a2a2a;
-  background: #222;
+  border: 1px solid var(--border);
+  background: var(--surface-2);
   padding: 16px;
   align-self: center;
   justify-self: center;
@@ -479,12 +131,7 @@
   padding-bottom: 10px;
 }
 
-.tet-sidebar-header .tet-play-title {
-  margin-top: 4px;
-}
-
-.tet-hold-panel,
-.tet-next-panel {
+.tet-preview {
   width: 100%;
   display: flex;
   flex-direction: column;
@@ -493,26 +140,19 @@
   padding: 2px 0 8px;
 }
 
-.tet-next-grid {
+.tet-preview-grid {
   width: 100%;
   max-width: 128px;
   display: grid;
   grid-template-columns: repeat(4, 1fr);
   gap: 1px;
   padding: 1px;
-  border: 1px solid #2a2a2a;
+  border: 1px solid var(--border);
   background: #1b1b1b;
 }
 
-.tet-next-cell {
+.tet-preview-cell {
   aspect-ratio: 1;
-  background: #1b1b1b;
-  border: 1px solid #252525;
-}
-
-.tet-next-cell-filled {
-  border-color: rgba(255, 255, 255, 0.08);
-  box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.08);
 }
 
 .tet-stat {
@@ -521,7 +161,7 @@
   gap: 12px;
   align-items: center;
   width: 100%;
-  border-bottom: 1px solid #2a2a2a;
+  border-bottom: 1px solid var(--border);
   padding-bottom: 10px;
 }
 
@@ -531,21 +171,14 @@
 }
 
 .tet-stat-label {
-  color: #9f9f9f;
+  color: var(--text-dim);
   font-size: 0.78rem;
   letter-spacing: 0.06em;
   text-transform: uppercase;
 }
 
 .tet-stat-value {
-  font-variant-numeric: tabular-nums;
   font-size: 1rem;
-}
-
-.tet-sidebar-note {
-  color: #c8c8c8;
-  font-size: 0.88rem;
-  line-height: 1.5;
 }
 
 .tet-sidebar-actions {
@@ -553,6 +186,39 @@
   flex-direction: column;
   gap: 8px;
   width: 100%;
+}
+
+/* ── Touch controls (shown only on narrow screens) ── */
+
+.tet-mobile-controls {
+  display: none;
+  width: 100%;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 8px;
+  margin-top: 14px;
+}
+
+.tet-mobile-control {
+  border: 1px solid var(--border);
+  background: var(--surface-2);
+  color: var(--text);
+  padding: 12px 10px;
+  font-family: inherit;
+  font-size: 0.92rem;
+  font-weight: 600;
+  cursor: pointer;
+  touch-action: manipulation;
+  user-select: none;
+}
+
+.tet-mobile-control:hover,
+.tet-mobile-control:active {
+  background: var(--hover);
+  border-color: var(--border-strong);
+}
+
+.tet-mobile-control-wide {
+  grid-column: span 3;
 }
 
 @media (max-width: 760px) {
@@ -570,9 +236,9 @@
     flex-wrap: wrap;
   }
 
-  .tet-sidebar-actions .tet-start-button,
-  .tet-sidebar-actions .tet-back-button {
+  .tet-sidebar-actions .btn {
     flex: 1 1 160px;
+    width: auto;
   }
 
   .tet-mobile-controls {
@@ -583,13 +249,6 @@
 @media (max-width: 600px) {
   .tet-play-card {
     padding: 12px;
-  }
-
-  .tet-play-header {
-    align-items: flex-start;
-    flex-direction: column;
-    gap: 8px;
-    margin-bottom: 12px;
   }
 
   .tet-play-title {
@@ -606,15 +265,9 @@
     gap: 10px;
   }
 
-  .tet-leaderboard-card {
-    padding: 16px;
-    max-height: calc(100dvh - 150px);
-  }
-
-  .tet-leaderboard-meta,
-  .tet-leaderboard-item,
-  .tet-leaderboard-you {
-    gap: 10px;
+  .tet-control-row {
+    align-items: flex-start;
+    flex-direction: column;
   }
 
   .tet-mobile-controls {
@@ -624,42 +277,5 @@
   .tet-mobile-control {
     padding: 14px 10px;
     font-size: 0.88rem;
-  }
-}
-
-.tet-primary-button:disabled {
-  opacity: 1;
-}
-
-@media (max-width: 760px) {
-  .tet-mode-list {
-    grid-template-columns: 1fr;
-  }
-}
-
-@media (max-width: 600px) {
-  .tet-container {
-    align-items: stretch;
-    padding: 12px;
-  }
-
-  .tet-menu-card,
-  .tet-setup-card {
-    padding: 18px;
-  }
-
-  .tet-control-row {
-    align-items: flex-start;
-    flex-direction: column;
-  }
-
-  .tet-mode-button {
-    align-items: flex-start;
-    flex-direction: column;
-    gap: 8px;
-  }
-
-  .tet-mode-summary {
-    text-align: left;
   }
 }

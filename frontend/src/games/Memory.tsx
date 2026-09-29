@@ -1,15 +1,18 @@
-import React, { useEffect, useState, useRef } from 'react'
-import { useParams, useNavigate, useLocation } from 'react-router-dom'
+import { useCallback, useEffect, useRef, useState } from 'react'
+import type { CSSProperties } from 'react'
+import { useLocation, useNavigate, useParams } from 'react-router-dom'
 import { GameFrame } from '../components/GameFrame'
-import { useLanguage } from '../context/LanguageContext'
-import { UsernameInput } from '../components/UsernameInput'
+import { LeaderboardPage } from '../components/Leaderboard'
+import { MenuCard, MenuOptionList } from '../components/MenuCard'
+import { ResultOverlay } from '../components/ResultOverlay'
+import { UsernameNotice } from '../components/UsernameNotice'
+import { useLanguage } from '../context/language'
+import { useLeaderboard } from '../hooks/useLeaderboard'
+import { formatTime } from '../lib/format'
 import './Memory.css'
-import './Leaderboard.css'
-
-type DifficultyKey = 'easy' | 'medium' | 'hard'
 
 type DifficultyConfig = {
-  key: DifficultyKey
+  key: 'easy' | 'medium' | 'hard'
   rows: number
   cols: number
   pairs: number
@@ -17,9 +20,9 @@ type DifficultyConfig = {
 }
 
 const DIFFICULTIES: DifficultyConfig[] = [
-  { key: 'easy',   rows: 4, cols: 4, pairs: 8,  cellSize: 96 },
+  { key: 'easy', rows: 4, cols: 4, pairs: 8, cellSize: 96 },
   { key: 'medium', rows: 5, cols: 6, pairs: 15, cellSize: 80 },
-  { key: 'hard',   rows: 7, cols: 8, pairs: 28, cellSize: 70 },
+  { key: 'hard', rows: 7, cols: 8, pairs: 28, cellSize: 70 },
 ]
 
 const ALL_LANGS = [
@@ -30,6 +33,9 @@ const ALL_LANGS = [
   'linux', 'bash', 'graphql', 'sass',
 ]
 
+/** How long a mismatched pair stays face up. */
+const MISMATCH_DELAY_MS = 900
+
 type CardState = {
   id: number
   lang: string
@@ -38,12 +44,6 @@ type CardState = {
 }
 
 type GamePhase = 'idle' | 'playing' | 'locked' | 'won'
-
-type LeaderboardEntry = {
-  username: string
-  time: number
-  date: string
-}
 
 function shuffle<T>(arr: T[]): T[] {
   const a = arr.slice()
@@ -58,17 +58,10 @@ function buildDeck(pairs: number): CardState[] {
   const langs = shuffle(ALL_LANGS).slice(0, pairs)
   const cards: CardState[] = []
   langs.forEach((lang, i) => {
-    cards.push({ id: i * 2,     lang, flipped: false, matched: false })
+    cards.push({ id: i * 2, lang, flipped: false, matched: false })
     cards.push({ id: i * 2 + 1, lang, flipped: false, matched: false })
   })
   return shuffle(cards)
-}
-
-function formatTime(totalSeconds: number): string {
-  const minutes = Math.floor(totalSeconds / 60)
-  const seconds = Math.floor(totalSeconds % 60)
-  const milliseconds = Math.floor((totalSeconds % 1) * 1000)
-  return `${String(minutes).padStart(2, '0')}:${String(seconds).padStart(2, '0')}.${String(milliseconds).padStart(3, '0')}`
 }
 
 export default function Memory() {
@@ -77,146 +70,62 @@ export default function Memory() {
   const location = useLocation()
   const { t } = useLanguage()
 
+  const difficulty = DIFFICULTIES.find((d) => d.key === difficultyParam) ?? null
+  const isLeaderboardPage = location.pathname.endsWith('/leaderboard')
+
   const [cards, setCards] = useState<CardState[]>([])
   const [phase, setPhase] = useState<GamePhase>('idle')
   const [firstFlipId, setFirstFlipId] = useState<number | null>(null)
   const [startTime, setStartTime] = useState<number | null>(null)
   const [elapsedTime, setElapsedTime] = useState(0)
-  const [scoreRecorded, setScoreRecorded] = useState(false)
-  const [leaderboardPending, setLeaderboardPending] = useState(false)
-  const [apiLeaderboard, setApiLeaderboard] = useState<LeaderboardEntry[] | null>(null)
-  const [leaderboardLoading, setLeaderboardLoading] = useState(false)
-  const [playerRank, setPlayerRank] = useState<number | null>(null)
-  const [playerEntry, setPlayerEntry] = useState<LeaderboardEntry | null>(null)
-  const [noticeDismissed, setNoticeDismissed] = useState(false)
-  const sessionTokenRef = useRef<string | null>(null)
-  const gameIdRef = useRef(0)
+  /** Bumped on every deal so a pending flip-back cannot touch a new deck. */
+  const dealIdRef = useRef(0)
 
-  const difficulty = DIFFICULTIES.find(d => d.key === difficultyParam) ?? null
-  const isLeaderboardPage = location.pathname.endsWith('/leaderboard')
+  const leaderboard = useLeaderboard({
+    game: 'memory',
+    difficulty: difficulty?.key ?? null,
+    metric: 'time',
+    session: !isLeaderboardPage,
+    autoLoad: isLeaderboardPage,
+  })
+  const { submit, startSession } = leaderboard
 
-  const hasCustomUsername = () => {
-    const stored = localStorage.getItem('minigames-username')
-    return stored !== null && stored !== 'Player'
-  }
-
-  const getParentRoute = () => {
-    const parts = location.pathname.split('/').filter(Boolean)
-    if (parts.length <= 1) return `/${lang}`
-    return `/${parts.slice(0, -1).join('/')}`
-  }
-
-  function startNewGame(diff: DifficultyConfig) {
-    gameIdRef.current += 1
-    setCards(buildDeck(diff.pairs))
+  const deal = useCallback(() => {
+    dealIdRef.current += 1
+    setCards(difficulty ? buildDeck(difficulty.pairs) : [])
     setPhase('idle')
     setFirstFlipId(null)
     setStartTime(null)
     setElapsedTime(0)
-    setScoreRecorded(false)
-    setLeaderboardPending(false)
-    setApiLeaderboard(null)
-    setPlayerRank(null)
-    setPlayerEntry(null)
-    sessionTokenRef.current = null
-    fetch('/api/game-session', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ game: 'memory', difficulty: diff.key }),
-    })
-      .then(r => r.json())
-      .then((data: { token: string }) => { sessionTokenRef.current = data.token })
-      .catch(() => {})
-  }
+  }, [difficulty])
 
   useEffect(() => {
-    if (!difficulty) {
-      setCards([])
-      setPhase('idle')
-      setFirstFlipId(null)
-      setStartTime(null)
-      setElapsedTime(0)
-      setScoreRecorded(false)
-      setLeaderboardPending(false)
-      sessionTokenRef.current = null
-      setApiLeaderboard(null)
-      setPlayerRank(null)
-      setPlayerEntry(null)
-      return
-    }
-    startNewGame(difficulty)
-  }, [difficultyParam])
-
-  useEffect(() => {
-    if (!isLeaderboardPage || !difficulty) return
-    setLeaderboardLoading(true)
-    const username = localStorage.getItem('minigames-username') ?? 'Player'
-    fetch(`/api/leaderboard?game=memory&difficulty=${difficulty.key}&username=${encodeURIComponent(username)}`)
-      .then(r => r.json())
-      .then((data: { entries: LeaderboardEntry[]; playerRank?: number; playerEntry?: LeaderboardEntry }) => {
-        setApiLeaderboard(data.entries)
-        if (data.playerRank !== undefined) setPlayerRank(data.playerRank)
-        if (data.playerEntry !== undefined) setPlayerEntry(data.playerEntry)
-      })
-      .catch(() => setApiLeaderboard([]))
-      .finally(() => setLeaderboardLoading(false))
-  }, [isLeaderboardPage, difficulty?.key])
+    deal()
+  }, [deal])
 
   useEffect(() => {
     if (!startTime || phase === 'won') return
-    const interval = setInterval(() => {
-      setElapsedTime((Date.now() - startTime) / 1000)
-    }, 50)
+    const interval = setInterval(() => setElapsedTime((Date.now() - startTime) / 1000), 50)
     return () => clearInterval(interval)
   }, [startTime, phase])
 
-  async function recordWinTime(time: number) {
-    if (scoreRecorded || !sessionTokenRef.current || !difficulty) return
-    setScoreRecorded(true)
-    setPlayerRank(null)
-    setPlayerEntry(null)
-    setLeaderboardPending(true)
-    try {
-      const res = await fetch('/api/leaderboard', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          token: sessionTokenRef.current,
-          username: localStorage.getItem('minigames-username') ?? 'Player',
-          time,
-        }),
-      })
-      if (res.ok) {
-        const data = await res.json() as {
-          entries: LeaderboardEntry[]
-          playerRank?: number
-          playerEntry?: LeaderboardEntry
-        }
-        setApiLeaderboard(data.entries)
-        if (data.playerRank !== undefined) setPlayerRank(data.playerRank)
-        if (data.playerEntry !== undefined) setPlayerEntry(data.playerEntry)
-      }
-    } catch { /* score submission failed silently */ }
-    finally {
-      setLeaderboardPending(false)
-    }
-  }
-
+  // Win once every card is matched.
   useEffect(() => {
     if (phase === 'won' || cards.length === 0) return
-    if (cards.every(c => c.matched)) {
-      const finalTime = startTime ? (Date.now() - startTime) / 1000 : elapsedTime
-      setPhase('won')
-      void recordWinTime(finalTime)
-    }
-  }, [cards])
+    if (!cards.every((card) => card.matched)) return
 
-  function handleCardClick(id: number) {
+    const finalTime = startTime ? (Date.now() - startTime) / 1000 : elapsedTime
+    setPhase('won')
+    setElapsedTime(finalTime)
+    void submit(finalTime)
+  }, [cards, elapsedTime, phase, startTime, submit])
+
+  const handleCardClick = (id: number) => {
     if (phase === 'locked' || phase === 'won') return
-    const card = cards.find(c => c.id === id)
+    const card = cards.find((c) => c.id === id)
     if (!card || card.flipped || card.matched) return
 
-    setCards(prev => prev.map(c => c.id === id ? { ...c, flipped: true } : c))
+    setCards((prev) => prev.map((c) => (c.id === id ? { ...c, flipped: true } : c)))
 
     if (phase === 'idle') {
       setPhase('playing')
@@ -228,147 +137,67 @@ export default function Memory() {
       return
     }
 
-    const firstCard = cards.find(c => c.id === firstFlipId)!
-    const fId = firstFlipId
+    const firstCard = cards.find((c) => c.id === firstFlipId)!
+    const firstId = firstFlipId
     setFirstFlipId(null)
-    setPhase('locked')
+    const isPair = (c: CardState) => c.id === firstId || c.id === id
 
     if (firstCard.lang === card.lang) {
-      setCards(prev => prev.map(c =>
-        c.id === fId || c.id === id ? { ...c, flipped: true, matched: true } : c
-      ))
-      setPhase('playing')
-    } else {
-      const capturedGameId = gameIdRef.current
-      setTimeout(() => {
-        if (gameIdRef.current !== capturedGameId) return
-        setCards(prev => prev.map(c =>
-          c.id === fId || c.id === id ? { ...c, flipped: false } : c
-        ))
-        setPhase('playing')
-      }, 900)
+      setCards((prev) => prev.map((c) => (isPair(c) ? { ...c, flipped: true, matched: true } : c)))
+      return
     }
+
+    setPhase('locked')
+    const dealId = dealIdRef.current
+    setTimeout(() => {
+      if (dealIdRef.current !== dealId) return
+      setCards((prev) => prev.map((c) => (isPair(c) ? { ...c, flipped: false } : c)))
+      setPhase('playing')
+    }, MISMATCH_DELAY_MS)
   }
 
-  function renderLeaderboard() {
-    if (leaderboardLoading) {
-      return (
-        <div className="mem-leaderboard-loading" role="status" aria-live="polite">
-          <span className="mem-loading-spinner" aria-hidden="true" />
-          <span>{t('leaderboard.calculatingPlace')}</span>
-        </div>
-      )
-    }
-    const entries = apiLeaderboard ?? []
-    const podiumEntries = entries.slice(0, 3)
-    const listEntries = entries.slice(3, 15)
-
-    return (
-      <div className="mem-leaderboard-layout">
-        <div className="mem-podium">
-          {podiumEntries.length === 0 ? (
-            <div className="mem-leaderboard-empty">{t('leaderboard.empty')}</div>
-          ) : (
-            podiumEntries.map((entry, index) => {
-              const place = index + 1
-              return (
-                <div
-                  key={`${difficulty!.key}-${entry.time}-${entry.date}`}
-                  className={`mem-podium-slot mem-podium-${place}`}
-                >
-                  <div className="mem-podium-place">#{place}</div>
-                  <div className="mem-podium-username">{entry.username}</div>
-                  <div className="mem-podium-time">{formatTime(entry.time)}</div>
-                  <div className="mem-podium-date">{new Date(entry.date).toLocaleDateString()}</div>
-                </div>
-              )
-            })
-          )}
-        </div>
-
-        {listEntries.length > 0 && (
-          <ol className="mem-leaderboard-list">
-            {listEntries.map((entry, index) => {
-              const place = index + 4
-              return (
-                <li
-                  key={`${difficulty!.key}-${entry.time}-${entry.date}`}
-                  className="mem-leaderboard-item"
-                >
-                  <span className="mem-rank">#{place}</span>
-                  <span className="mem-score-user">{entry.username}</span>
-                  <span className="mem-score-time">{formatTime(entry.time)}</span>
-                  <span className="mem-score-date">{new Date(entry.date).toLocaleDateString()}</span>
-                </li>
-              )
-            })}
-          </ol>
-        )}
-
-        {playerRank !== null && playerRank > 15 && playerEntry !== null && (
-          <>
-            <div className="mem-leaderboard-separator">· · ·</div>
-            <ol className="mem-leaderboard-list">
-              <li className="mem-leaderboard-item mem-leaderboard-item-you">
-                <span className="mem-rank">#{playerRank}</span>
-                <span className="mem-score-user">{playerEntry.username}</span>
-                <span className="mem-score-time">{formatTime(playerEntry.time)}</span>
-                <span className="mem-score-date">{new Date(playerEntry.date).toLocaleDateString()}</span>
-              </li>
-            </ol>
-          </>
-        )}
-      </div>
-    )
+  const reset = () => {
+    deal()
+    startSession()
   }
 
   if (!difficulty) {
     return (
       <GameFrame gameName={t('memory')} onBack={() => navigate(`/${lang}`)}>
-        <div className="mem-container mem-menu">
-          <div className="mem-menu-card">
-            <div className="mem-menu-title">{t('difficulty.choose')}</div>
-            <div className="mem-menu-username">
-              <span className="mem-menu-username-label">{t('username.label')}</span>
-              <UsernameInput />
-            </div>
-            <div className="mem-menu-list">
-              {DIFFICULTIES.map(d => (
-                <button
-                  key={d.key}
-                  className="mem-menu-button"
-                  onClick={() => navigate(`/${lang}/memory/${d.key}`)}
-                  type="button"
-                >
-                  <span>{t(`difficulty.${d.key}`)}</span>
-                  <span>{d.cols}×{d.rows}</span>
-                </button>
-              ))}
-            </div>
-          </div>
+        <div className="game-page game-page--center">
+          <MenuCard title={t('difficulty.choose')} withUsername>
+            <MenuOptionList
+              options={DIFFICULTIES.map((option) => ({
+                key: option.key,
+                label: t(`difficulty.${option.key}`),
+                meta: `${option.cols}×${option.rows}`,
+              }))}
+              onSelect={(key) => navigate(`/${lang}/memory/${key}`)}
+            />
+          </MenuCard>
         </div>
       </GameFrame>
     )
   }
 
+  const leaderboardHref = `/${lang}/memory/${difficulty.key}/leaderboard`
+
   if (isLeaderboardPage) {
     return (
       <GameFrame
         gameName={t('memory')}
-        onBack={() => navigate(getParentRoute())}
-        leaderboardHref={`/${lang}/memory/${difficulty.key}/leaderboard`}
+        onBack={() => navigate(`/${lang}/memory/${difficulty.key}`)}
+        leaderboardHref={leaderboardHref}
       >
-        <div className="mem-container mem-menu mem-leaderboard-page">
-          <div className="mem-leaderboard-card">
-            <div className="mem-leaderboard-title">
-              {t('leaderboard.title')} · {t(`difficulty.${difficulty.key}`)}
-            </div>
-            <div className="mem-leaderboard-meta">
-              {difficulty.cols}×{difficulty.rows} · {difficulty.pairs} {t('memory.pairs')}
-            </div>
-            {renderLeaderboard()}
-          </div>
-        </div>
+        <LeaderboardPage
+          title={`${t('leaderboard.title')} · ${t(`difficulty.${difficulty.key}`)}`}
+          meta={`${difficulty.cols}×${difficulty.rows} · ${difficulty.pairs} ${t('memory.pairs')}`}
+          metric="time"
+          entries={leaderboard.entries}
+          loading={leaderboard.loading}
+          playerRank={leaderboard.playerRank}
+          playerEntry={leaderboard.playerEntry}
+        />
       </GameFrame>
     )
   }
@@ -376,94 +205,67 @@ export default function Memory() {
   return (
     <GameFrame
       gameName={t('memory')}
-      onBack={() => navigate(getParentRoute())}
-      leaderboardHref={`/${lang}/memory/${difficulty.key}/leaderboard`}
+      onBack={() => navigate(`/${lang}/memory`)}
+      leaderboardHref={leaderboardHref}
     >
-      <div className="mem-container">
-        {!noticeDismissed && !hasCustomUsername() && (
-          <div className="mem-username-notice">
-            <span>{t('username.notice')}</span>
-            <button
-              className="mem-notice-dismiss"
-              onClick={() => setNoticeDismissed(true)}
-              type="button"
-              aria-label="Dismiss"
-            >
-              ✕
+      <div className="game-page game-page--scroll">
+        <UsernameNotice />
+
+        <div className="game-hud">
+          <div className="game-hud-info">
+            {t(`difficulty.${difficulty.key}`)} · {difficulty.cols}×{difficulty.rows} ·{' '}
+            {t('btn.timer')}: <span className="timer">{formatTime(elapsedTime)}</span>
+          </div>
+          <div className="game-hud-actions">
+            <button className="btn" onClick={() => navigate(`/${lang}/memory`)} type="button">
+              {t('btn.difficulty')}
+            </button>
+            <button className="btn" onClick={reset} type="button">
+              {t('btn.reset')}
             </button>
           </div>
-        )}
+        </div>
 
-        <div className="mem-game">
-          <div className="mem-header">
-            <div className="mem-info">
-              {t(`difficulty.${difficulty.key}`)} · {difficulty.cols}×{difficulty.rows} · {t('btn.timer')}: <span className="mem-timer">{formatTime(elapsedTime)}</span>
-            </div>
-            <div className="mem-controls">
-              <button
-                className="mem-btn"
-                onClick={() => navigate(`/${lang}/memory`)}
-                type="button"
+        <div className="mem-board-wrapper">
+          <div
+            className="mem-board"
+            style={
+              { gridTemplateColumns: `repeat(${difficulty.cols}, ${difficulty.cellSize}px)` } as CSSProperties
+            }
+          >
+            {cards.map((card) => (
+              <div
+                key={card.id}
+                className={`mem-card${card.flipped || card.matched ? ' flipped' : ''}${
+                  card.matched ? ' matched' : ''
+                }`}
+                onClick={() => handleCardClick(card.id)}
+                role="button"
+                tabIndex={0}
+                aria-label={card.matched ? card.lang : 'hidden card'}
+                onKeyDown={(event) => {
+                  if (event.key === 'Enter' || event.key === ' ') handleCardClick(card.id)
+                }}
               >
-                {t('btn.difficulty')}
-              </button>
-              <button
-                className="mem-btn"
-                onClick={() => startNewGame(difficulty)}
-                type="button"
-              >
-                {t('btn.reset')}
-              </button>
-            </div>
-          </div>
-
-          <div className="mem-board-wrapper">
-            <div
-              className="mem-board"
-              style={{
-                gridTemplateColumns: `repeat(${difficulty.cols}, ${difficulty.cellSize}px)`,
-              } as React.CSSProperties}
-            >
-              {cards.map(card => (
-                <div
-                  key={card.id}
-                  className={`mem-card${card.flipped || card.matched ? ' flipped' : ''}${card.matched ? ' matched' : ''}`}
-                  onClick={() => handleCardClick(card.id)}
-                  role="button"
-                  tabIndex={0}
-                  aria-label={card.matched ? card.lang : 'hidden card'}
-                  onKeyDown={e => {
-                    if (e.key === 'Enter' || e.key === ' ') handleCardClick(card.id)
-                  }}
-                >
-                  <div className="mem-card-inner">
-                    <div className="mem-card-front">&lt;/&gt;</div>
-                    <div className="mem-card-back">
-                      <img
-                        src={`/icons/langs/${card.lang}.svg`}
-                        alt={card.lang}
-                        draggable={false}
-                      />
-                    </div>
+                <div className="mem-card-inner">
+                  <div className="mem-card-front">&lt;/&gt;</div>
+                  <div className="mem-card-back">
+                    <img src={`/icons/langs/${card.lang}.svg`} alt={card.lang} draggable={false} />
                   </div>
                 </div>
-              ))}
-            </div>
+              </div>
+            ))}
           </div>
         </div>
 
         {phase === 'won' && (
-          <div className="mem-overlay success mem-overlay-blocking" aria-live="polite">
-            <div>{t('game.win')} · {formatTime(elapsedTime)}</div>
-            {leaderboardPending ? (
-              <div className="mem-overlay-loading">
-                <span className="mem-loading-spinner" aria-hidden="true" />
-                <span>{t('leaderboard.calculatingPlace')}</span>
-              </div>
-            ) : playerRank !== null ? (
-              <div className="mem-overlay-rank">#{playerRank}</div>
-            ) : null}
-          </div>
+          <ResultOverlay
+            tone="success"
+            title={t('game.win')}
+            detail={formatTime(elapsedTime)}
+            pending={leaderboard.submitting}
+            rank={leaderboard.playerRank}
+          />
         )}
       </div>
     </GameFrame>

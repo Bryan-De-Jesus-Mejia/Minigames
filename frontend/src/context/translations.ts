@@ -1,17 +1,14 @@
-import React, { createContext, useContext } from 'react'
-import type { ReactNode } from 'react'
-  
-type Language = 'en' | 'es'
+export const LANGUAGES = ['en', 'es'] as const
 
-interface LanguageContextType {
-  language: Language
-  setLanguage: (lang: Language) => void
-  t: (key: string) => string
+export type Language = (typeof LANGUAGES)[number]
+
+export const DEFAULT_LANGUAGE: Language = 'en'
+
+export function isLanguage(value: unknown): value is Language {
+  return typeof value === 'string' && (LANGUAGES as readonly string[]).includes(value)
 }
 
-const LanguageContext = createContext<LanguageContextType | undefined>(undefined)
-
-const translations: Record<Language, Record<string, string>> = {
+export const translations: Record<Language, Record<string, string>> = {
   en: {
     'menu.title': 'MINIGAMES',
     'minesweeper': 'Minesweeper',
@@ -53,6 +50,7 @@ const translations: Record<Language, Record<string, string>> = {
     'btn.reset': 'Reset',
     'btn.flag': 'Flag',
     'btn.timer': 'Timer',
+    'btn.dismiss': 'Dismiss',
     'difficulty.choose': 'Choose difficulty',
     'difficulty.easy': 'Easy',
     'difficulty.medium': 'Medium',
@@ -65,8 +63,13 @@ const translations: Record<Language, Record<string, string>> = {
     'leaderboard.empty': 'No wins recorded yet.',
     'leaderboard.podium': 'Podium',
     'leaderboard.calculatingPlace': 'Calculating leaderboard place',
+    'minesweeper.mines': 'mines',
+    'placeholder.title': 'Coming Soon',
+    'placeholder.body': '{game} is under development',
     'username.notice': 'Set a player name so your scores are saved to the leaderboard.',
     'username.label': 'Player name',
+    'username.edit': 'Click to change your display name',
+    'username.placeholder': 'Your name',
   },
   es: {
     'menu.title': 'MINIGAMES',
@@ -109,6 +112,7 @@ const translations: Record<Language, Record<string, string>> = {
     'btn.reset': 'Reiniciar',
     'btn.flag': 'Banderas',
     'btn.timer': 'Tiempo',
+    'btn.dismiss': 'Descartar',
     'difficulty.choose': 'Elegir dificultad',
     'difficulty.easy': 'Fácil',
     'difficulty.medium': 'Medio',
@@ -121,38 +125,12 @@ const translations: Record<Language, Record<string, string>> = {
     'leaderboard.empty': 'Aun no hay victorias registradas.',
     'leaderboard.podium': 'Podio',
     'leaderboard.calculatingPlace': 'Calculando puesto en la clasificación',
+    'minesweeper.mines': 'minas',
+    'placeholder.title': 'Próximamente',
+    'placeholder.body': '{game} está en desarrollo',
     'username.notice': 'Establece un nombre para que tus puntajes sean guardados en la tabla de clasificación.',
     'username.label': 'Nombre de jugador',
+    'username.edit': 'Haz clic para cambiar tu nombre',
+    'username.placeholder': 'Tu nombre',
   },
-  
-}
-
-interface LanguageProviderProps {
-  children: ReactNode
-  initialLanguage?: Language
-}
-
-export function LanguageProvider({
-  children,
-  initialLanguage = 'en',
-}: LanguageProviderProps) {
-  const [language, setLanguage] = React.useState<Language>(initialLanguage)
-
-  const t = (key: string): string => {
-    return translations[language][key] || key
-  }
-
-  return (
-    <LanguageContext.Provider value={{ language, setLanguage, t }}>
-      {children}
-    </LanguageContext.Provider>
-  )
-}
-
-export function useLanguage(): LanguageContextType {
-  const context = useContext(LanguageContext)
-  if (!context) {
-    throw new Error('useLanguage must be used within a LanguageProvider')
-  }
-  return context
 }

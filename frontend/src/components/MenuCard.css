@@ -1,0 +1,86 @@
+/* One card shell for the Minesweeper/Memory difficulty pickers and the Tetris
+   mode picker and setup screen. */
+
+.menu-card {
+  width: min(100%, 540px);
+  border: 1px solid var(--border);
+  background: var(--surface);
+  padding: 20px;
+  text-align: left;
+}
+
+.menu-card-title {
+  margin: 0 0 16px;
+  font-size: clamp(1rem, 2.4vw, 1.6rem);
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  text-align: center;
+}
+
+.menu-card .username-field {
+  margin-bottom: 16px;
+}
+
+.menu-options {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.menu-option {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  width: 100%;
+  padding: 14px 16px;
+  border: 1px solid var(--border);
+  background: var(--surface-2);
+  color: var(--text);
+  font-family: inherit;
+  font-size: 0.95rem;
+  text-align: left;
+  cursor: pointer;
+  transition: background var(--transition), border-color var(--transition);
+}
+
+.menu-option:hover {
+  background: var(--hover-2);
+  border-color: var(--border-strong);
+}
+
+.menu-option-label {
+  flex: 0 0 auto;
+  font-weight: 700;
+  letter-spacing: 0.02em;
+}
+
+.menu-option-meta {
+  flex: 1 1 auto;
+  color: #d0d0d0;
+  font-size: 0.92rem;
+  line-height: 1.45;
+  text-align: right;
+}
+
+@media (max-width: 600px) {
+  .menu-card {
+    padding: 16px;
+  }
+
+  .menu-option {
+    padding: 12px 14px;
+  }
+
+  /* Long descriptions (Tetris modes) need their own line on narrow screens. */
+  .menu-option--stack {
+    align-items: flex-start;
+    flex-direction: column;
+    gap: 8px;
+  }
+
+  .menu-option--stack .menu-option-meta {
+    text-align: left;
+  }
+}

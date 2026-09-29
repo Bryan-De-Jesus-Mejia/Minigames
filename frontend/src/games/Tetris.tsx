@@ -1,16 +1,15 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { useNavigate, useParams } from 'react-router-dom'
 import { GameFrame } from '../components/GameFrame'
-import { UsernameInput } from '../components/UsernameInput'
-import { useLanguage } from '../context/LanguageContext'
-import { useUsername } from '../hooks/useUsername'
+import { LeaderboardPage } from '../components/Leaderboard'
+import { MenuCard, MenuOptionList } from '../components/MenuCard'
+import { ResultOverlay } from '../components/ResultOverlay'
+import { useLanguage } from '../context/language'
+import { useLeaderboard } from '../hooks/useLeaderboard'
 import './Tetris.css'
-import './Leaderboard.css'
-
-type TetrisModeKey = 'classic' | 'marathon' | 'zen'
 
 type TetrisMode = {
-  key: TetrisModeKey
+  key: 'classic' | 'marathon' | 'zen'
   titleKey: string
   summaryKey: string
   dropInterval: number
@@ -33,14 +32,11 @@ type Piece = {
   y: number
 }
 
-type LeaderboardEntry = {
-  username: string
-  score: number
-  date: string
-}
-
 const BOARD_WIDTH = 10
 const BOARD_HEIGHT = 20
+const PREVIEW_SIZE = 4
+/** Delay between repeats while a mobile move button is held down. */
+const MOBILE_REPEAT_MS = 85
 
 const PIECE_TYPES: PieceType[] = ['I', 'O', 'T', 'S', 'Z', 'J', 'L']
 
@@ -53,8 +49,6 @@ const PIECE_COLORS: Record<PieceType, string> = {
   J: '#6f82a8',
   L: '#b18a63',
 }
-
-const PREVIEW_SIZE = 4
 
 const SHAPES: Record<PieceType, Cell[][]> = {
   I: [
@@ -145,34 +139,27 @@ const CONTROL_ROWS = [
   { labelKey: 'tetris.control.softDrop', value: '↓' },
   { labelKey: 'tetris.control.hardDrop', value: 'Space' },
   { labelKey: 'tetris.control.hold', value: 'C / Shift' },
-] as const
+]
 
-const MOBILE_CONTROL_ROWS = [
-  {
-    labelKey: 'tetris.mobile.left',
-    action: 'left',
-  },
-  {
-    labelKey: 'tetris.mobile.rotate',
-    action: 'rotate',
-  },
-  {
-    labelKey: 'tetris.mobile.right',
-    action: 'right',
-  },
-  {
-    labelKey: 'tetris.mobile.drop',
-    action: 'drop',
-  },
-  {
-    labelKey: 'tetris.mobile.hold',
-    action: 'hold',
-  },
-  {
-    labelKey: 'tetris.mobile.hardDrop',
-    action: 'hardDrop',
-  },
-] as const
+type MobileAction = 'left' | 'right' | 'rotate' | 'drop' | 'hold' | 'hardDrop'
+
+type MobileControl = {
+  labelKey: string
+  action: MobileAction
+  /** Spans the full control row. */
+  wide?: boolean
+  /** Keeps firing while held down. */
+  repeat?: boolean
+}
+
+const MOBILE_CONTROLS: MobileControl[] = [
+  { labelKey: 'tetris.mobile.hold', action: 'hold', wide: true },
+  { labelKey: 'tetris.mobile.left', action: 'left', repeat: true },
+  { labelKey: 'tetris.mobile.rotate', action: 'rotate' },
+  { labelKey: 'tetris.mobile.right', action: 'right', repeat: true },
+  { labelKey: 'tetris.mobile.drop', action: 'drop', wide: true },
+  { labelKey: 'tetris.mobile.hardDrop', action: 'hardDrop', wide: true },
+]
 
 function createEmptyRow(): BoardCell[] {
   return Array.from({ length: BOARD_WIDTH }, () => null)
@@ -187,63 +174,53 @@ function randomPieceType(): PieceType {
 }
 
 function createPiece(type: PieceType = randomPieceType()): Piece {
-  return {
-    type,
-    rotation: 0,
-    x: 3,
-    y: 0,
-  }
+  return { type, rotation: 0, x: 3, y: 0 }
 }
 
 function getPieceCells(piece: Piece): Cell[] {
-  return SHAPES[piece.type][piece.rotation].map(([offsetX, offsetY]) => [piece.x + offsetX, piece.y + offsetY] as const)
+  return SHAPES[piece.type][piece.rotation].map(
+    ([offsetX, offsetY]) => [piece.x + offsetX, piece.y + offsetY] as const,
+  )
+}
+
+function cellKeys(cells: Cell[]): Set<string> {
+  return new Set(cells.map(([x, y]) => `${x}:${y}`))
 }
 
 function getPreviewCells(pieceType: PieceType): Set<string> {
-  return new Set(
-    getPieceCells({ type: pieceType, rotation: 0, x: 0, y: 0 }).map(([x, y]) => `${x}:${y}`),
-  )
+  return cellKeys(getPieceCells({ type: pieceType, rotation: 0, x: 0, y: 0 }))
 }
 
 function canPlace(board: Board, piece: Piece): boolean {
   return getPieceCells(piece).every(([x, y]) => {
-    if (x < 0 || x >= BOARD_WIDTH || y < 0 || y >= BOARD_HEIGHT) {
-      return false
-    }
-
+    if (x < 0 || x >= BOARD_WIDTH || y < 0 || y >= BOARD_HEIGHT) return false
     return board[y][x] === null
   })
 }
 
 function getLandingPiece(board: Board, piece: Piece): Piece {
   let landingPiece = piece
-
   while (canPlace(board, { ...landingPiece, y: landingPiece.y + 1 })) {
     landingPiece = { ...landingPiece, y: landingPiece.y + 1 }
   }
-
   return landingPiece
 }
 
 function mergePiece(board: Board, piece: Piece): Board {
   const nextBoard = board.map((row) => row.slice())
-
   for (const [x, y] of getPieceCells(piece)) {
     if (y >= 0 && y < BOARD_HEIGHT && x >= 0 && x < BOARD_WIDTH) {
       nextBoard[y][x] = piece.type
     }
   }
-
   return nextBoard
 }
 
 function clearCompleteLines(board: Board): { board: Board; clearedLines: number } {
   const remainingRows = board.filter((row) => row.some((cell) => cell === null))
   const clearedLines = BOARD_HEIGHT - remainingRows.length
-  const nextBoard = Array.from({ length: clearedLines }, () => createEmptyRow()).concat(remainingRows)
-
   return {
-    board: nextBoard,
+    board: Array.from({ length: clearedLines }, () => createEmptyRow()).concat(remainingRows),
     clearedLines,
   }
 }
@@ -258,31 +235,64 @@ function scoreForLines(clearedLines: number, level: number, scoreMultiplier: num
 
 function getDropInterval(mode: TetrisMode, lines: number): number {
   const level = getLevelForLines(mode, lines)
-  return Math.max(mode.minDropInterval, mode.dropInterval - ((level - mode.startLevel) * mode.dropStep))
+  return Math.max(mode.minDropInterval, mode.dropInterval - (level - mode.startLevel) * mode.dropStep)
+}
+
+/** 4x4 grid used for both the hold slot and the next-piece slot. */
+function PiecePreview({ label, pieceType }: { label: string; pieceType: PieceType | null }) {
+  const cells = useMemo(() => (pieceType ? getPreviewCells(pieceType) : new Set<string>()), [pieceType])
+
+  return (
+    <div className="tet-preview">
+      <div className="tet-stat-label">{label}</div>
+      <div className="tet-preview-grid" role="grid" aria-label={label}>
+        {Array.from({ length: PREVIEW_SIZE * PREVIEW_SIZE }, (_, index) => {
+          const key = `${index % PREVIEW_SIZE}:${Math.floor(index / PREVIEW_SIZE)}`
+          const filled = pieceType !== null && cells.has(key)
+          return (
+            <div
+              key={key}
+              className={`tet-preview-cell ${filled ? 'tet-cell-filled' : ''}`}
+              style={filled ? { backgroundColor: PIECE_COLORS[pieceType] } : undefined}
+            />
+          )
+        })}
+      </div>
+    </div>
+  )
 }
 
 export default function Tetris() {
-  const { lang, mode: modeParam, action: actionParam } = useParams<{ lang: string; mode?: string; action?: string }>()
+  const { lang, mode: modeParam, action: actionParam } = useParams<{
+    lang: string
+    mode?: string
+    action?: string
+  }>()
   const navigate = useNavigate()
   const { t } = useLanguage()
-  const { username } = useUsername()
 
   const selectedMode = MODES.find((mode) => mode.key === modeParam) ?? null
   const isPlaying = selectedMode !== null && actionParam === 'play'
   const isLeaderboardPage = selectedMode !== null && actionParam === 'leaderboard'
 
-  const [board, setBoard] = useState<Board>(() => createEmptyBoard())
-  const [piece, setPiece] = useState<Piece>(() => createPiece())
-  const [nextPiece, setNextPiece] = useState<Piece>(() => createPiece())
+  const leaderboard = useLeaderboard({
+    game: 'tetris',
+    difficulty: selectedMode?.key ?? null,
+    metric: 'score',
+    session: isPlaying,
+    autoLoad: isLeaderboardPage,
+  })
+  const { submit, startSession } = leaderboard
+
+  const [board, setBoard] = useState<Board>(createEmptyBoard)
+  const [piece, setPiece] = useState<Piece>(createPiece)
+  const [nextPiece, setNextPiece] = useState<Piece>(createPiece)
   const [heldPiece, setHeldPiece] = useState<PieceType | null>(null)
   const [score, setScore] = useState(0)
   const [lines, setLines] = useState(0)
   const [gameOver, setGameOver] = useState(false)
-  const [sessionToken, setSessionToken] = useState<string | null>(null)
-  const [leaderboardLoading, setLeaderboardLoading] = useState(false)
-  const [leaderboardEntries, setLeaderboardEntries] = useState<LeaderboardEntry[] | null>(null)
-  const [scoreSubmitting, setScoreSubmitting] = useState(false)
 
+  // The game loop and key handlers read the latest state synchronously.
   const boardRef = useRef(board)
   const pieceRef = useRef(piece)
   const nextPieceRef = useRef(nextPiece)
@@ -292,10 +302,7 @@ export default function Tetris() {
   const linesRef = useRef(lines)
   const gameOverRef = useRef(gameOver)
   const dropTimeoutRef = useRef<number | null>(null)
-  const mobileRepeatTimeoutRef = useRef<number | null>(null)
   const mobileRepeatIntervalRef = useRef<number | null>(null)
-  const sessionTokenRef = useRef<string | null>(null)
-  const scoreSubmittedRef = useRef(false)
 
   useEffect(() => { boardRef.current = board }, [board])
   useEffect(() => { pieceRef.current = piece }, [piece])
@@ -304,13 +311,8 @@ export default function Tetris() {
   useEffect(() => { scoreRef.current = score }, [score])
   useEffect(() => { linesRef.current = lines }, [lines])
   useEffect(() => { gameOverRef.current = gameOver }, [gameOver])
-  useEffect(() => { sessionTokenRef.current = sessionToken }, [sessionToken])
 
-  const goBack = () => {
-    navigate(`/${lang}`)
-  }
-
-  const restartGame = useCallback(() => {
+  const resetGame = useCallback(() => {
     const freshBoard = createEmptyBoard()
     const freshPiece = createPiece()
     const freshNextPiece = createPiece()
@@ -331,48 +333,38 @@ export default function Tetris() {
     setScore(0)
     setLines(0)
     setGameOver(false)
-    scoreSubmittedRef.current = false
   }, [])
 
+  /** Restart from the UI: a new run also needs a new signed session. */
+  const restart = useCallback(() => {
+    resetGame()
+    startSession()
+  }, [resetGame, startSession])
+
   const movePiece = useCallback((deltaX: number, deltaY: number) => {
-    if (gameOverRef.current) {
-      return false
-    }
+    if (gameOverRef.current) return false
 
-    const currentPiece = pieceRef.current
-    const nextPiece = {
-      ...currentPiece,
-      x: currentPiece.x + deltaX,
-      y: currentPiece.y + deltaY,
-    }
+    const current = pieceRef.current
+    const moved = { ...current, x: current.x + deltaX, y: current.y + deltaY }
+    if (!canPlace(boardRef.current, moved)) return false
 
-    if (!canPlace(boardRef.current, nextPiece)) {
-      return false
-    }
-
-    pieceRef.current = nextPiece
-    setPiece(nextPiece)
+    pieceRef.current = moved
+    setPiece(moved)
     return true
   }, [])
 
   const rotatePiece = useCallback((direction: 1 | -1) => {
-    if (gameOverRef.current) {
-      return false
-    }
+    if (gameOverRef.current) return false
 
-    const currentPiece = pieceRef.current
-    const nextRotation = (currentPiece.rotation + direction + 4) % 4
+    const current = pieceRef.current
+    const nextRotation = (current.rotation + direction + 4) % 4
 
+    // Wall kicks: try the rotation shifted sideways before giving up.
     for (const offsetX of [0, -1, 1, -2, 2]) {
-      const rotatedPiece = {
-        ...currentPiece,
-        rotation: nextRotation,
-        x: currentPiece.x + offsetX,
-      }
-
-      if (canPlace(boardRef.current, rotatedPiece)) {
-        pieceRef.current = rotatedPiece
-        setPiece(rotatedPiece)
+      const rotated = { ...current, rotation: nextRotation, x: current.x + offsetX }
+      if (canPlace(boardRef.current, rotated)) {
+        pieceRef.current = rotated
+        setPiece(rotated)
         return true
       }
     }
@@ -380,18 +372,34 @@ export default function Tetris() {
     return false
   }, [])
 
+  /** Spawns the queued piece; reports false when it no longer fits. */
+  const spawnNextPiece = useCallback((currentBoard: Board) => {
+    const spawn = createPiece(nextPieceRef.current.type)
+    const freshNextPiece = createPiece()
+
+    nextPieceRef.current = freshNextPiece
+    setNextPiece(freshNextPiece)
+
+    if (!canPlace(currentBoard, spawn)) {
+      gameOverRef.current = true
+      setGameOver(true)
+      return false
+    }
+
+    pieceRef.current = spawn
+    setPiece(spawn)
+    return true
+  }, [])
+
   const lockPiece = useCallback(() => {
-    const currentPiece = pieceRef.current
-    const lockedBoard = mergePiece(boardRef.current, currentPiece)
+    const lockedBoard = mergePiece(boardRef.current, pieceRef.current)
     const { board: clearedBoard, clearedLines } = clearCompleteLines(lockedBoard)
 
-    const nextLines = linesRef.current + clearedLines
-    const nextLevel = selectedMode ? getLevelForLines(selectedMode, nextLines) : 1
-
     if (clearedLines > 0) {
-      const points = selectedMode ? scoreForLines(clearedLines, nextLevel, selectedMode.scoreMultiplier) : scoreForLines(clearedLines, nextLevel, 1)
+      const nextLines = linesRef.current + clearedLines
+      const level = selectedMode ? getLevelForLines(selectedMode, nextLines) : 1
       linesRef.current = nextLines
-      scoreRef.current += points
+      scoreRef.current += scoreForLines(clearedLines, level, selectedMode?.scoreMultiplier ?? 1)
       setLines(nextLines)
       setScore(scoreRef.current)
     }
@@ -399,23 +407,10 @@ export default function Tetris() {
     boardRef.current = clearedBoard
     setBoard(clearedBoard)
 
-    const queuedPiece = nextPieceRef.current
-    const freshNextPiece = createPiece()
-    const nextSpawnPiece = createPiece(queuedPiece.type)
-
-    nextPieceRef.current = freshNextPiece
-    setNextPiece(freshNextPiece)
-
-    if (canPlace(clearedBoard, nextSpawnPiece)) {
-      pieceRef.current = nextSpawnPiece
-      setPiece(nextSpawnPiece)
+    if (spawnNextPiece(clearedBoard)) {
       holdUsedRef.current = false
-      return
     }
-
-    gameOverRef.current = true
-    setGameOver(true)
-  }, [selectedMode])
+  }, [selectedMode, spawnNextPiece])
 
   const softDrop = useCallback(() => {
     if (movePiece(0, 1)) {
@@ -423,209 +418,103 @@ export default function Tetris() {
       setScore(scoreRef.current)
       return
     }
-
     lockPiece()
   }, [lockPiece, movePiece])
 
   const hardDrop = useCallback(() => {
     let distance = 0
-
-    while (movePiece(0, 1)) {
-      distance += 1
-    }
+    while (movePiece(0, 1)) distance += 1
 
     if (distance > 0) {
       scoreRef.current += distance * 2
       setScore(scoreRef.current)
     }
-
     lockPiece()
   }, [lockPiece, movePiece])
 
-  const stopMobileRepeat = useCallback(() => {
-    if (mobileRepeatTimeoutRef.current !== null) {
-      window.clearTimeout(mobileRepeatTimeoutRef.current)
-      mobileRepeatTimeoutRef.current = null
+  const holdPiece = useCallback(() => {
+    if (gameOverRef.current || holdUsedRef.current) return
+
+    const outgoing = pieceRef.current.type
+
+    if (heldPieceRef.current === null) {
+      if (!spawnNextPiece(boardRef.current)) return
+    } else {
+      const swapped = createPiece(heldPieceRef.current)
+      if (!canPlace(boardRef.current, swapped)) {
+        gameOverRef.current = true
+        setGameOver(true)
+        return
+      }
+      pieceRef.current = swapped
+      setPiece(swapped)
     }
 
+    heldPieceRef.current = outgoing
+    setHeldPiece(outgoing)
+    holdUsedRef.current = true
+  }, [spawnNextPiece])
+
+  const stopMobileRepeat = useCallback(() => {
     if (mobileRepeatIntervalRef.current !== null) {
       window.clearInterval(mobileRepeatIntervalRef.current)
       mobileRepeatIntervalRef.current = null
     }
   }, [])
 
-  const startMobileRepeat = useCallback((deltaX: -1 | 1) => {
-    stopMobileRepeat()
-    movePiece(deltaX, 0)
-    mobileRepeatIntervalRef.current = window.setInterval(() => {
+  const startMobileRepeat = useCallback(
+    (deltaX: -1 | 1) => {
+      stopMobileRepeat()
       movePiece(deltaX, 0)
-    }, 85)
-  }, [movePiece, stopMobileRepeat])
+      mobileRepeatIntervalRef.current = window.setInterval(
+        () => movePiece(deltaX, 0),
+        MOBILE_REPEAT_MS,
+      )
+    },
+    [movePiece, stopMobileRepeat],
+  )
 
-  const holdPiece = useCallback(() => {
-    if (gameOverRef.current || holdUsedRef.current) {
-      return false
-    }
-
-    const currentPiece = pieceRef.current
-    const nextHeldPiece = currentPiece.type
-
-    if (heldPieceRef.current === null) {
-      const queuedPiece = nextPieceRef.current
-      const freshNextPiece = createPiece()
-      const nextSpawnPiece = createPiece(queuedPiece.type)
-
-      nextPieceRef.current = freshNextPiece
-      setNextPiece(freshNextPiece)
-
-      if (!canPlace(boardRef.current, nextSpawnPiece)) {
-        gameOverRef.current = true
-        setGameOver(true)
-        return false
+  const handleMobileControl = useCallback(
+    (action: MobileAction) => {
+      switch (action) {
+        case 'left': startMobileRepeat(-1); break
+        case 'right': startMobileRepeat(1); break
+        case 'rotate': rotatePiece(1); break
+        case 'drop': softDrop(); break
+        case 'hold': holdPiece(); break
+        case 'hardDrop': hardDrop(); break
       }
+    },
+    [hardDrop, holdPiece, rotatePiece, softDrop, startMobileRepeat],
+  )
 
-      heldPieceRef.current = nextHeldPiece
-      setHeldPiece(nextHeldPiece)
-      pieceRef.current = nextSpawnPiece
-      setPiece(nextSpawnPiece)
-      holdUsedRef.current = true
-      return true
-    }
+  useEffect(() => stopMobileRepeat, [stopMobileRepeat])
 
-    const swappedPiece = createPiece(heldPieceRef.current)
-
-    if (!canPlace(boardRef.current, swappedPiece)) {
-      gameOverRef.current = true
-      setGameOver(true)
-      return false
-    }
-
-    heldPieceRef.current = nextHeldPiece
-    setHeldPiece(nextHeldPiece)
-    pieceRef.current = swappedPiece
-    setPiece(swappedPiece)
-    holdUsedRef.current = true
-    return true
-  }, [])
-
+  // A fresh board whenever a run starts.
   useEffect(() => {
-    if (!isPlaying) {
-      return
-    }
+    if (!isPlaying) return
+    resetGame()
+  }, [isPlaying, resetGame, selectedMode?.key])
 
-    restartGame()
-  }, [isPlaying, restartGame, selectedMode?.key])
-
+  // Submit once the run ends; the hook ignores repeat calls per session.
   useEffect(() => {
-    if (!isPlaying || !selectedMode) {
-      setSessionToken(null)
-      return
-    }
+    if (!isPlaying || !gameOver) return
+    void submit(scoreRef.current)
+  }, [gameOver, isPlaying, submit])
 
-    sessionTokenRef.current = null
-    setSessionToken(null)
-
-    fetch('/api/game-session', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ game: 'tetris', difficulty: selectedMode.key }),
-    })
-      .then((response) => response.json())
-      .then((data: { token: string }) => {
-        sessionTokenRef.current = data.token
-        setSessionToken(data.token)
-      })
-      .catch(() => {
-        sessionTokenRef.current = null
-        setSessionToken(null)
-      })
-  }, [isPlaying, selectedMode?.key])
-
+  // Gravity.
   useEffect(() => {
-    if (!isPlaying || !gameOver || !selectedMode || scoreSubmittedRef.current || !sessionTokenRef.current) {
-      return
-    }
-
-    const submitScore = async () => {
-      scoreSubmittedRef.current = true
-      setScoreSubmitting(true)
-      try {
-        const response = await fetch('/api/leaderboard', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            token: sessionTokenRef.current,
-            username,
-            score,
-          }),
-        })
-
-        if (response.ok) {
-          const data = await response.json() as { entries: LeaderboardEntry[]; playerRank?: number; playerEntry?: LeaderboardEntry }
-          setLeaderboardEntries(data.entries)
-        }
-      } catch {
-        // Ignore submission failure; the player can retry by restarting.
-      } finally {
-        setScoreSubmitting(false)
-      }
-    }
-
-    void submitScore()
-  }, [gameOver, isPlaying, score, selectedMode?.key, username])
-
-  useEffect(() => {
-    if (!isLeaderboardPage || !selectedMode) {
-      return
-    }
-
-    let cancelled = false
-    setLeaderboardLoading(true)
-
-    fetch(`/api/leaderboard?game=tetris&difficulty=${selectedMode.key}&username=${encodeURIComponent(username)}`)
-      .then((response) => response.json())
-      .then((data: { entries: LeaderboardEntry[]; playerRank?: number; playerEntry?: LeaderboardEntry }) => {
-        if (cancelled) return
-        setLeaderboardEntries(data.entries)
-      })
-      .catch(() => {
-        if (cancelled) return
-        setLeaderboardEntries([])
-      })
-      .finally(() => {
-        if (!cancelled) setLeaderboardLoading(false)
-      })
-
-    return () => {
-      cancelled = true
-    }
-  }, [isLeaderboardPage, selectedMode?.key, username])
-
-  useEffect(() => {
-    if (!isPlaying || gameOver) {
-      return
-    }
+    if (!isPlaying || gameOver || !selectedMode) return
 
     const scheduleNextDrop = () => {
-      if (!selectedMode || gameOverRef.current) {
-        return
-      }
-
-      const dropDelay = getDropInterval(selectedMode, linesRef.current)
+      if (gameOverRef.current) return
 
       dropTimeoutRef.current = window.setTimeout(() => {
         dropTimeoutRef.current = null
-
-        if (gameOverRef.current) {
-          return
-        }
-
-        if (!movePiece(0, 1)) {
-          lockPiece()
-        }
-
+        if (gameOverRef.current) return
+        if (!movePiece(0, 1)) lockPiece()
         scheduleNextDrop()
-      }, dropDelay)
+      }, getDropInterval(selectedMode, linesRef.current))
     }
 
     scheduleNextDrop()
@@ -638,278 +527,189 @@ export default function Tetris() {
     }
   }, [gameOver, isPlaying, lockPiece, movePiece, selectedMode])
 
+  // Keyboard controls.
   useEffect(() => {
-    if (!isPlaying) {
-      return
-    }
+    if (!isPlaying) return
 
     const handleKeyDown = (event: KeyboardEvent) => {
       const key = event.key.toLowerCase()
       const code = event.code
 
-      if (code === 'Space' || code === 'ShiftLeft' || code === 'ShiftRight' || key.startsWith('arrow') || key === 'x' || key === 'z' || key === 'r' || key === 'c') {
-        event.preventDefault()
-      }
+      const handled =
+        code === 'Space' ||
+        code === 'ShiftLeft' ||
+        code === 'ShiftRight' ||
+        key.startsWith('arrow') ||
+        key === 'x' ||
+        key === 'z' ||
+        key === 'r' ||
+        key === 'c'
+      if (handled) event.preventDefault()
 
       if (gameOverRef.current) {
-        if (key === 'r' || code === 'Enter') {
-          restartGame()
-        }
+        if (key === 'r' || code === 'Enter') restart()
         return
       }
 
-      if (code === 'Space') {
-        hardDrop()
-        return
-      }
-
-      if (key === 'c' || code === 'ShiftLeft' || code === 'ShiftRight') {
-        holdPiece()
-        return
-      }
+      if (code === 'Space') return hardDrop()
+      if (key === 'c' || code === 'ShiftLeft' || code === 'ShiftRight') return holdPiece()
 
       switch (key) {
-        case 'arrowleft':
-          movePiece(-1, 0)
-          break
-        case 'arrowright':
-          movePiece(1, 0)
-          break
-        case 'arrowdown':
-          softDrop()
-          break
+        case 'arrowleft': movePiece(-1, 0); break
+        case 'arrowright': movePiece(1, 0); break
+        case 'arrowdown': softDrop(); break
         case 'arrowup':
-        case 'x':
-          rotatePiece(1)
-          break
-        case 'z':
-          rotatePiece(-1)
-          break
-        case 'r':
-          rotatePiece(1)
-          break
-        default:
-          break
+        case 'x': rotatePiece(1); break
+        case 'z': rotatePiece(-1); break
       }
     }
 
     window.addEventListener('keydown', handleKeyDown)
     return () => window.removeEventListener('keydown', handleKeyDown)
-  }, [hardDrop, holdPiece, isPlaying, movePiece, restartGame, rotatePiece, softDrop])
+  }, [hardDrop, holdPiece, isPlaying, movePiece, restart, rotatePiece, softDrop])
 
-  const activeCells = useMemo(() => {
-    return new Set(getPieceCells(piece).map(([x, y]) => `${x}:${y}`))
-  }, [piece])
-
-  const landingPiece = useMemo(() => getLandingPiece(board, piece), [board, piece])
-
-  const landingCells = useMemo(() => {
-    return new Set(getPieceCells(landingPiece).map(([x, y]) => `${x}:${y}`))
-  }, [landingPiece])
-
-  const previewCells = useMemo(() => {
-    return getPreviewCells(nextPiece.type)
-  }, [nextPiece])
-
-  const holdPreviewCells = useMemo(() => {
-    return heldPiece ? getPreviewCells(heldPiece) : new Set<string>()
-  }, [heldPiece])
-
-  const handleMobileControl = useCallback((action: typeof MOBILE_CONTROL_ROWS[number]['action']) => {
-    switch (action) {
-      case 'left':
-        startMobileRepeat(-1)
-        break
-      case 'right':
-        startMobileRepeat(1)
-        break
-      case 'rotate':
-        rotatePiece(1)
-        break
-      case 'drop':
-        softDrop()
-        break
-      case 'hold':
-        holdPiece()
-        break
-      case 'hardDrop':
-        hardDrop()
-        break
-      default:
-        break
-    }
-  }, [hardDrop, holdPiece, rotatePiece, softDrop, startMobileRepeat])
-
-  useEffect(() => {
-    return () => {
-      stopMobileRepeat()
-    }
-  }, [stopMobileRepeat])
+  const activeCells = useMemo(() => cellKeys(getPieceCells(piece)), [piece])
+  const landingCells = useMemo(
+    () => cellKeys(getPieceCells(getLandingPiece(board, piece))),
+    [board, piece],
+  )
 
   if (!selectedMode) {
     return (
-      <GameFrame gameName={t('tetris')} onBack={goBack}>
-        <div className="tet-container tet-menu">
-          <div className="tet-menu-card">
-            <h2 className="tet-menu-title">{t('tetris.menu.title')}</h2>
-
-            <div className="tet-menu-username">
-              <span className="tet-menu-username-label">{t('username.label')}</span>
-              <UsernameInput />
-            </div>
-
-            <div className="tet-mode-list">
-              {MODES.map((mode) => (
-                <button
-                  key={mode.key}
-                  className="tet-mode-button"
-                  onClick={() => navigate(`/${lang}/tetris/${mode.key}`)}
-                  type="button"
-                >
-                  <span className="tet-mode-name">{t(mode.titleKey)}</span>
-                  <span className="tet-mode-summary">{t(mode.summaryKey)}</span>
-                </button>
-              ))}
-            </div>
-          </div>
+      <GameFrame gameName={t('tetris')} onBack={() => navigate(`/${lang}`)}>
+        <div className="game-page game-page--center">
+          <MenuCard title={t('tetris.menu.title')} withUsername>
+            <MenuOptionList
+              stackOnMobile
+              options={MODES.map((mode) => ({
+                key: mode.key,
+                label: t(mode.titleKey),
+                meta: t(mode.summaryKey),
+              }))}
+              onSelect={(key) => navigate(`/${lang}/tetris/${key}`)}
+            />
+          </MenuCard>
         </div>
       </GameFrame>
     )
   }
 
+  const modePath = `/${lang}/tetris/${selectedMode.key}`
+
   if (isLeaderboardPage) {
     return (
-      <GameFrame
-        gameName={t('tetris')}
-        onBack={() => navigate(`/${lang}/tetris/${selectedMode.key}`)}
-      >
-        <div className="tet-container tet-leaderboard-page">
-          <div className="tet-leaderboard-card">
-            <div className="tet-leaderboard-title">{t('leaderboard.title')} · {t(selectedMode.titleKey)}</div>
-
-            {leaderboardLoading ? (
-              <div className="tet-leaderboard-loading">{t('leaderboard.calculatingPlace')}</div>
-            ) : leaderboardEntries && leaderboardEntries.length > 0 ? (
-              <ol className="tet-leaderboard-list">
-                {leaderboardEntries.map((entry, index) => (
-                  <li key={`${entry.username}-${entry.date}-${index}`} className={`tet-leaderboard-item ${entry.username === username ? 'tet-leaderboard-item-you' : ''}`}>
-                    <span className="tet-leaderboard-rank">{index + 1}</span>
-                    <span className="tet-leaderboard-user">{entry.username}</span>
-                    <strong className="tet-leaderboard-score">{entry.score}</strong>
-                  </li>
-                ))}
-              </ol>
-            ) : (
-              <div className="tet-leaderboard-empty">{t('leaderboard.empty')}</div>
-            )}
-          </div>
-        </div>
+      <GameFrame gameName={t('tetris')} onBack={() => navigate(modePath)}>
+        <LeaderboardPage
+          title={`${t('leaderboard.title')} · ${t(selectedMode.titleKey)}`}
+          metric="score"
+          entries={leaderboard.entries}
+          loading={leaderboard.loading}
+          playerRank={leaderboard.playerRank}
+          playerEntry={leaderboard.playerEntry}
+        />
       </GameFrame>
     )
   }
 
   if (!isPlaying) {
     return (
-      <GameFrame gameName={t('tetris')} onBack={() => navigate(`/${lang}/tetris`)} leaderboardHref={`/${lang}/tetris/${selectedMode.key}/leaderboard`}>
-        <div className="tet-container tet-setup">
-          <div className="tet-setup-card">
-            <h2 className="tet-setup-title">{t(selectedMode.titleKey)}</h2>
-
+      <GameFrame
+        gameName={t('tetris')}
+        onBack={() => navigate(`/${lang}/tetris`)}
+        leaderboardHref={`${modePath}/leaderboard`}
+      >
+        <div className="game-page game-page--center">
+          <MenuCard title={t(selectedMode.titleKey)}>
             <div className="tet-control-grid">
               <div className="tet-control-grid-title">{t('tetris.control.title')}</div>
               {CONTROL_ROWS.map((row) => (
                 <div className="tet-control-row" key={row.labelKey}>
                   <span className="tet-control-label">{t(row.labelKey)}</span>
-                  <span className="tet-control-value">{row.value}</span>
+                  <span className="tet-control-value tabular">{row.value}</span>
                 </div>
               ))}
             </div>
 
             <div className="tet-setup-actions">
               <button
-                className="tet-start-button tet-primary-button"
+                className="btn btn-lg"
                 type="button"
-                onClick={() => navigate(`/${lang}/tetris/${selectedMode.key}/play`)}
+                onClick={() => navigate(`${modePath}/play`)}
               >
                 {t('btn.start')}
               </button>
             </div>
-          </div>
+          </MenuCard>
         </div>
       </GameFrame>
     )
   }
 
   return (
-    <GameFrame gameName={t('tetris')} onBack={() => navigate(`/${lang}/tetris/${selectedMode.key}`)} leaderboardHref={`/${lang}/tetris/${selectedMode.key}/leaderboard`}>
-      <div className="tet-container tet-play">
+    <GameFrame
+      gameName={t('tetris')}
+      onBack={() => navigate(modePath)}
+      leaderboardHref={`${modePath}/leaderboard`}
+    >
+      <div className="game-page game-page--center game-page--scroll">
         <div className="tet-play-card">
           <div className="tet-play-layout">
             <div className="tet-board-shell">
-              <div className="tet-board" role="grid" aria-label={`${t('tetris')} ${t('tetris.hud.mode')}: ${t(selectedMode.titleKey)}`}>
-                {board.map((row, rowIndex) => (
+              <div
+                className="tet-board"
+                role="grid"
+                aria-label={`${t('tetris')} ${t('tetris.hud.mode')}: ${t(selectedMode.titleKey)}`}
+              >
+                {board.map((row, rowIndex) =>
                   row.map((cell, columnIndex) => {
                     const key = `${columnIndex}:${rowIndex}`
                     const activeType = activeCells.has(key) ? piece.type : cell
-                    const isLandingCell = !activeType && landingCells.has(key)
+                    const isGhost = !activeType && landingCells.has(key)
 
                     return (
                       <div
                         key={key}
-                        className={`tet-cell ${activeType ? 'tet-cell-filled' : ''} ${isLandingCell ? 'tet-cell-ghost' : ''}`}
-                        style={activeType ? { backgroundColor: PIECE_COLORS[activeType] } : isLandingCell ? { borderColor: 'rgba(255, 255, 255, 0.18)' } : undefined}
+                        className={`tet-cell ${activeType ? 'tet-cell-filled' : ''} ${
+                          isGhost ? 'tet-cell-ghost' : ''
+                        }`}
+                        style={activeType ? { backgroundColor: PIECE_COLORS[activeType] } : undefined}
                       />
                     )
-                  })
-                ))}
+                  }),
+                )}
               </div>
 
               {gameOver ? (
-                <div className="tet-gameover-overlay">
-                  <div className="tet-gameover-card">
-                    <div className="tet-gameover-title">{t('game.over')}</div>
-                    <div className="tet-gameover-score">{score}</div>
-                    {scoreSubmitting ? <div className="tet-gameover-submitting">{t('leaderboard.calculatingPlace')}</div> : null}
-                    <button className="tet-start-button tet-primary-button" onClick={restartGame} type="button">
-                      {t('btn.reset')}
-                    </button>
-                  </div>
-                </div>
+                <ResultOverlay
+                  inset
+                  title={t('game.over')}
+                  detail={score}
+                  pending={leaderboard.submitting}
+                  rank={leaderboard.playerRank}
+                >
+                  <button className="btn btn-lg" onClick={restart} type="button">
+                    {t('btn.reset')}
+                  </button>
+                </ResultOverlay>
               ) : null}
 
               <div className="tet-mobile-controls" aria-label={t('tetris.mobile.title')}>
-                <button type="button" className="tet-mobile-control tet-mobile-control-wide" onPointerDown={(event) => { event.preventDefault(); handleMobileControl('hold') }}>
-                  {t('tetris.mobile.hold')}
-                </button>
-                <button
-                  type="button"
-                  className="tet-mobile-control"
-                  onPointerDown={(event) => { event.preventDefault(); handleMobileControl('left') }}
-                  onPointerUp={stopMobileRepeat}
-                  onPointerCancel={stopMobileRepeat}
-                  onPointerLeave={stopMobileRepeat}
-                >
-                  {t('tetris.mobile.left')}
-                </button>
-                <button type="button" className="tet-mobile-control" onPointerDown={(event) => { event.preventDefault(); handleMobileControl('rotate') }}>
-                  {t('tetris.mobile.rotate')}
-                </button>
-                <button
-                  type="button"
-                  className="tet-mobile-control"
-                  onPointerDown={(event) => { event.preventDefault(); handleMobileControl('right') }}
-                  onPointerUp={stopMobileRepeat}
-                  onPointerCancel={stopMobileRepeat}
-                  onPointerLeave={stopMobileRepeat}
-                >
-                  {t('tetris.mobile.right')}
-                </button>
-                <button type="button" className="tet-mobile-control tet-mobile-control-wide" onPointerDown={(event) => { event.preventDefault(); handleMobileControl('drop') }}>
-                  {t('tetris.mobile.drop')}
-                </button>
-                <button type="button" className="tet-mobile-control tet-mobile-control-wide" onPointerDown={(event) => { event.preventDefault(); handleMobileControl('hardDrop') }}>
-                  {t('tetris.mobile.hardDrop')}
-                </button>
+                {MOBILE_CONTROLS.map((control) => (
+                  <button
+                    key={control.action}
+                    type="button"
+                    className={`tet-mobile-control ${control.wide ? 'tet-mobile-control-wide' : ''}`}
+                    onPointerDown={(event) => {
+                      event.preventDefault()
+                      handleMobileControl(control.action)
+                    }}
+                    onPointerUp={control.repeat ? stopMobileRepeat : undefined}
+                    onPointerCancel={control.repeat ? stopMobileRepeat : undefined}
+                    onPointerLeave={control.repeat ? stopMobileRepeat : undefined}
+                  >
+                    {t(control.labelKey)}
+                  </button>
+                ))}
               </div>
             </div>
 
@@ -919,60 +719,23 @@ export default function Tetris() {
                 <h2 className="tet-play-title">{t(selectedMode.titleKey)}</h2>
               </div>
 
-              <div className="tet-hold-panel">
-                <div className="tet-stat-label">{t('tetris.hud.hold')}</div>
-                <div className="tet-next-grid" role="grid" aria-label={t('tetris.hud.hold')}>
-                  {Array.from({ length: PREVIEW_SIZE * PREVIEW_SIZE }, (_, index) => {
-                    const x = index % PREVIEW_SIZE
-                    const y = Math.floor(index / PREVIEW_SIZE)
-                    const key = `${x}:${y}`
-                    const activeType = heldPiece && holdPreviewCells.has(key) ? heldPiece : null
-
-                    return (
-                      <div
-                        key={key}
-                        className={`tet-next-cell ${activeType ? 'tet-next-cell-filled' : ''}`}
-                        style={activeType ? { backgroundColor: PIECE_COLORS[activeType] } : undefined}
-                      />
-                    )
-                  })}
-                </div>
-              </div>
-
-              <div className="tet-next-panel">
-                <div className="tet-stat-label">{t('tetris.hud.next')}</div>
-                <div className="tet-next-grid" role="grid" aria-label={t('tetris.hud.next')}>
-                  {Array.from({ length: PREVIEW_SIZE * PREVIEW_SIZE }, (_, index) => {
-                    const x = index % PREVIEW_SIZE
-                    const y = Math.floor(index / PREVIEW_SIZE)
-                    const key = `${x}:${y}`
-                    const activeType = previewCells.has(key) ? nextPiece.type : null
-
-                    return (
-                      <div
-                        key={key}
-                        className={`tet-next-cell ${activeType ? 'tet-next-cell-filled' : ''}`}
-                        style={activeType ? { backgroundColor: PIECE_COLORS[activeType] } : undefined}
-                      />
-                    )
-                  })}
-                </div>
-              </div>
+              <PiecePreview label={t('tetris.hud.hold')} pieceType={heldPiece} />
+              <PiecePreview label={t('tetris.hud.next')} pieceType={nextPiece.type} />
 
               <div className="tet-stat">
                 <span className="tet-stat-label">{t('tetris.hud.score')}</span>
-                <strong className="tet-stat-value">{score}</strong>
+                <strong className="tet-stat-value tabular">{score}</strong>
               </div>
               <div className="tet-stat">
                 <span className="tet-stat-label">{t('tetris.hud.lines')}</span>
-                <strong className="tet-stat-value">{lines}</strong>
+                <strong className="tet-stat-value tabular">{lines}</strong>
               </div>
 
               <div className="tet-sidebar-actions">
-                <button className="tet-start-button tet-primary-button" onClick={restartGame} type="button">
+                <button className="btn btn-lg" onClick={restart} type="button">
                   {t('btn.reset')}
                 </button>
-                <button className="tet-back-button" onClick={() => navigate(`/${lang}/tetris/${selectedMode.key}`)} type="button">
+                <button className="btn btn-lg" onClick={() => navigate(modePath)} type="button">
                   {t('btn.back')}
                 </button>
               </div>

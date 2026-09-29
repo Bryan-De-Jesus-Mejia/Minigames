@@ -1,0 +1,71 @@
+/* Lives with the component instead of inside GameFrame.css, where it used to
+   sit even though the menus render it too. */
+
+.username-display {
+  background: transparent;
+  border: 1px solid var(--border);
+  color: #aaaaaa;
+  padding: 6px 10px;
+  font-family: inherit;
+  cursor: pointer;
+  font-size: 0.8rem;
+  border-radius: var(--radius);
+  max-width: 90px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  transition: background var(--transition), border-color var(--transition), color var(--transition);
+}
+
+.username-display:hover {
+  border-color: var(--border-strong);
+  background: var(--hover);
+  color: var(--text);
+}
+
+.username-form {
+  display: flex;
+}
+
+.username-input {
+  background: var(--hover);
+  border: 1px solid var(--border-strong);
+  color: var(--text);
+  padding: 6px 10px;
+  font-family: inherit;
+  font-size: 0.8rem;
+  border-radius: var(--radius);
+  width: 90px;
+  outline: none;
+}
+
+.username-input:focus {
+  border-color: #555555;
+}
+
+/* Block layout used inside game menus. */
+.username-field {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.username-field-label {
+  font-size: 0.78rem;
+  color: var(--text-dim);
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+}
+
+.username-field .username-form,
+.username-field .username-input,
+.username-field .username-display {
+  width: 100%;
+  max-width: none;
+  font-size: 0.95rem;
+  padding: 10px 14px;
+}
+
+.username-field .username-display {
+  text-align: left;
+}

@@ -1,0 +1,16 @@
+.placeholder {
+  text-align: center;
+  color: var(--text);
+  padding: 40px 20px;
+}
+
+.placeholder-title {
+  font-size: 1.5rem;
+  font-weight: 600;
+  margin-bottom: 16px;
+}
+
+.placeholder-body {
+  font-size: 1rem;
+  opacity: 0.7;
+}

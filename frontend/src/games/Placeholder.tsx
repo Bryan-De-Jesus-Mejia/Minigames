@@ -1,16 +1,13 @@
+import { useLanguage } from '../context/language'
+import './Placeholder.css'
+
 export function Placeholder({ gameName }: { gameName: string }) {
+  const { t } = useLanguage()
+
   return (
-    <div style={{
-      textAlign: 'center',
-      color: '#ffffff',
-      padding: '40px 20px',
-    }}>
-      <h2 style={{ fontSize: '1.5rem', marginBottom: '16px', fontWeight: 600 }}>
-        Coming Soon
-      </h2>
-      <p style={{ fontSize: '1rem', opacity: 0.7, margin: 0 }}>
-        {gameName} is under development
-      </p>
+    <div className="placeholder">
+      <h2 className="placeholder-title">{t('placeholder.title')}</h2>
+      <p className="placeholder-body">{t('placeholder.body', { game: gameName })}</p>
     </div>
   )
 }
