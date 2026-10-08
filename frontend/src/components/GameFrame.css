@@ -6,20 +6,25 @@
   overflow: hidden;
 }
 
+/* Back | title | tools. A grid keeps the title centred without taking it out
+   of flow, so it can shrink instead of colliding on narrow screens. */
 .game-header {
-  display: flex;
+  display: grid;
+  /* Sides take what they need; the title takes the rest and ellipsises. */
+  grid-template-columns: auto minmax(0, 1fr) auto;
   align-items: center;
-  justify-content: flex-start;
-  padding: 20px 24px;
+  gap: 8px;
+  padding: clamp(10px, 2vw, 20px) clamp(12px, 2.5vw, 24px);
   background: var(--surface-2);
   border-bottom: 1px solid var(--border);
-  position: relative;
+  flex-shrink: 0;
 }
 
 .back-button {
-  display: flex;
+  display: inline-flex;
   align-items: center;
   gap: 8px;
+  justify-self: start;
   background: transparent;
   border: 1px solid var(--border);
   color: var(--text);
@@ -28,6 +33,7 @@
   font-size: 0.95rem;
   font-weight: 500;
   cursor: pointer;
+  white-space: nowrap;
   transition: background var(--transition), border-color var(--transition);
 }
 
@@ -41,15 +47,12 @@
 }
 
 .game-title {
-  font-size: 1.3rem;
+  font-size: clamp(1rem, 3vw, 1.3rem);
   font-weight: 600;
   color: var(--text);
   margin: 0;
   letter-spacing: 1px;
-  position: absolute;
-  left: 50%;
-  transform: translateX(-50%);
-  max-width: calc(100% - 220px);
+  min-width: 0;
   text-align: center;
   white-space: nowrap;
   overflow: hidden;
@@ -57,9 +60,10 @@
 }
 
 .game-header-tools {
-  margin-left: auto;
+  justify-self: end;
   display: flex;
   align-items: center;
+  min-width: 0;
 }
 
 .leaderboard-trophy-button {
@@ -68,6 +72,7 @@
   justify-content: center;
   width: 38px;
   height: 38px;
+  flex-shrink: 0;
   border: 1px solid var(--border);
   border-radius: 6px;
   background: var(--surface-2);
@@ -86,31 +91,75 @@
   background: var(--active);
 }
 
+/* The frame scrolls; the page inside it never gets centred out of reach. */
 .game-content {
-  flex: 1;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  padding: 24px;
+  flex: 1 1 auto;
   min-height: 0;
-  overflow: hidden;
+  overflow: auto;
+  -webkit-overflow-scrolling: touch;
 }
 
-@media (max-width: 600px) {
+@media (max-width: 768px) {
+  .back-button {
+    padding: 9px 12px;
+    font-size: 0.9rem;
+  }
+
+  .game-header-tools .username-display {
+    max-width: 70px;
+  }
+}
+
+/* Phones keep every control; the back label collapses to its arrow instead. */
+@media (max-width: 480px) {
   .game-header {
-    padding: 16px 20px;
-  }
-
-  .game-title {
-    font-size: 1.1rem;
-  }
-
-  .game-header-tools {
-    display: none;
+    gap: 6px;
+    padding: 8px 10px;
   }
 
   .back-button {
-    padding: 8px 12px;
-    font-size: 0.9rem;
+    padding: 9px;
+    gap: 0;
+  }
+
+  .back-button span {
+    display: none;
+  }
+
+  .game-title {
+    letter-spacing: 0.5px;
+  }
+
+  .game-header-tools .username-display {
+    max-width: 56px;
+    padding: 6px 8px;
+    font-size: 0.72rem;
+  }
+
+  .leaderboard-trophy-button {
+    width: 32px;
+    height: 32px;
+  }
+}
+
+/* Very narrow phones: the title is already in the browser tab, drop it here. */
+@media (max-width: 360px) {
+  .game-title {
+    display: none;
+  }
+}
+
+@media (max-height: 560px) {
+  .game-header {
+    padding: 6px 12px;
+  }
+
+  .back-button {
+    padding: 7px 12px;
+  }
+
+  .leaderboard-trophy-button {
+    width: 32px;
+    height: 32px;
   }
 }

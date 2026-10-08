@@ -69,3 +69,10 @@
 .username-field .username-display {
   text-align: left;
 }
+
+@media (max-width: 480px) {
+  .username-field .username-display,
+  .username-field .username-input {
+    padding: 12px 14px;
+  }
+}

@@ -47,15 +47,23 @@
   width: min(100%, 1080px);
   border: 1px solid var(--border);
   background: var(--surface);
-  padding: 20px;
+  padding: clamp(10px, 2vw, 20px);
 }
 
 .tet-play-layout {
   display: grid;
-  grid-template-columns: minmax(300px, 1fr) 250px;
+  grid-template-columns: minmax(0, 1fr) 250px;
   gap: 16px;
   align-items: center;
   justify-content: center;
+}
+
+.tet-board-column {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 12px;
+  min-width: 0;
 }
 
 .tet-play-kicker {
@@ -73,20 +81,21 @@
   text-transform: uppercase;
 }
 
+/* Height-driven so the 1:2 board always fits the viewport; the touch pad is a
+   sibling now, so it no longer stretches the shell out of its aspect ratio. */
 .tet-board-shell {
   position: relative;
-  width: 100%;
-  max-width: 400px;
+  height: min(62svh, 620px);
+  max-width: 100%;
   aspect-ratio: 1 / 2;
-  margin: 0 auto;
 }
 
 .tet-board {
   width: 100%;
   height: 100%;
   display: grid;
-  grid-template-columns: repeat(10, 1fr);
-  grid-template-rows: repeat(20, 1fr);
+  grid-template-columns: repeat(10, minmax(0, 1fr));
+  grid-template-rows: repeat(20, minmax(0, 1fr));
   gap: 1px;
   padding: 1px;
   background: var(--border);
@@ -97,6 +106,7 @@
 .tet-preview-cell {
   background: #1b1b1b;
   border: 1px solid #252525;
+  min-width: 0;
 }
 
 .tet-cell-filled {
@@ -120,9 +130,9 @@
   background: var(--surface-2);
   padding: 16px;
   align-self: center;
-  justify-self: center;
   align-items: center;
   text-align: center;
+  min-width: 0;
 }
 
 .tet-sidebar-header {
@@ -144,7 +154,7 @@
   width: 100%;
   max-width: 128px;
   display: grid;
-  grid-template-columns: repeat(4, 1fr);
+  grid-template-columns: repeat(4, minmax(0, 1fr));
   gap: 1px;
   padding: 1px;
   border: 1px solid var(--border);
@@ -188,23 +198,25 @@
   width: 100%;
 }
 
-/* ── Touch controls (shown only on narrow screens) ── */
+/* ── Touch controls (shown only where there is no keyboard) ── */
 
+/* Six columns so Drop and Hard drop share a row: three rows instead of four. */
 .tet-mobile-controls {
   display: none;
   width: 100%;
-  grid-template-columns: repeat(3, minmax(0, 1fr));
+  max-width: 420px;
+  grid-template-columns: repeat(6, minmax(0, 1fr));
   gap: 8px;
-  margin-top: 14px;
 }
 
 .tet-mobile-control {
+  grid-column: span 2;
   border: 1px solid var(--border);
   background: var(--surface-2);
   color: var(--text);
-  padding: 12px 10px;
+  padding: 12px 6px;
   font-family: inherit;
-  font-size: 0.92rem;
+  font-size: clamp(0.72rem, 2.4vw, 0.92rem);
   font-weight: 600;
   cursor: pointer;
   touch-action: manipulation;
@@ -217,57 +229,83 @@
   border-color: var(--border-strong);
 }
 
-.tet-mobile-control-wide {
+.tet-mobile-control--half {
   grid-column: span 3;
 }
 
-@media (max-width: 760px) {
+.tet-mobile-control--wide {
+  grid-column: span 6;
+}
+
+/* Single column: board, touch pad, then a sidebar folded into rows. */
+@media (max-width: 768px) {
   .tet-play-layout {
-    grid-template-columns: 1fr;
+    grid-template-columns: minmax(0, 1fr);
   }
 
   .tet-board-shell {
-    width: min(100%, 280px);
-    max-width: 280px;
-  }
-
-  .tet-sidebar-actions {
-    flex-direction: row;
-    flex-wrap: wrap;
-  }
-
-  .tet-sidebar-actions .btn {
-    flex: 1 1 160px;
-    width: auto;
+    height: min(44svh, 460px);
   }
 
   .tet-mobile-controls {
     display: grid;
   }
+
+  /* Previews and stats fold into one row so the whole game fits one screen. */
+  .tet-sidebar {
+    width: 100%;
+    display: grid;
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+    align-items: center;
+    gap: 10px;
+    padding: 10px;
+  }
+
+  /* The mode was chosen one screen back; the board needs the pixels more. */
+  .tet-sidebar-header {
+    display: none;
+  }
+
+  .tet-preview {
+    padding: 0;
+    gap: 5px;
+  }
+
+  .tet-preview-grid {
+    max-width: 68px;
+  }
+
+  .tet-stat {
+    flex-direction: column;
+    gap: 2px;
+    border-bottom: 0;
+    padding-bottom: 0;
+  }
+
+  .tet-sidebar-actions {
+    grid-column: 1 / -1;
+    flex-direction: row;
+  }
+
+  .tet-sidebar-actions .btn {
+    flex: 1 1 0;
+    width: auto;
+    min-width: 0;
+    padding: 10px 12px;
+  }
 }
 
-@media (max-width: 600px) {
+@media (max-width: 480px) {
   .tet-play-card {
-    padding: 12px;
+    padding: 8px;
   }
 
-  .tet-play-title {
-    font-size: 1rem;
-  }
-
-  .tet-board-shell {
-    width: min(100%, 240px);
-    max-width: 240px;
-  }
-
-  .tet-sidebar {
-    padding: 12px;
+  .tet-play-layout {
     gap: 10px;
   }
 
-  .tet-control-row {
-    align-items: flex-start;
-    flex-direction: column;
+  .tet-board-column {
+    gap: 8px;
   }
 
   .tet-mobile-controls {
@@ -275,7 +313,69 @@
   }
 
   .tet-mobile-control {
-    padding: 14px 10px;
-    font-size: 0.88rem;
+    padding: 13px 4px;
+  }
+}
+
+/* Landscape phones: board beside the controls so nothing needs scrolling. */
+/* Short screens: the controls cheat-sheet reads fine in two columns. */
+@media (max-height: 560px) {
+  .tet-control-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    margin-top: 10px;
+    gap: 8px;
+  }
+
+  .tet-control-grid-title {
+    grid-column: 1 / -1;
+  }
+
+  .tet-control-row {
+    padding: 8px 12px;
+  }
+
+  .tet-setup-actions {
+    margin-top: 12px;
+  }
+}
+
+@media (max-height: 560px) and (orientation: landscape) {
+  .tet-play-card {
+    padding: 8px;
+  }
+
+  .tet-play-layout {
+    grid-template-columns: auto minmax(0, 1fr);
+    align-items: center;
+    gap: 12px;
+  }
+
+  .tet-board-shell {
+    height: min(76svh, 420px);
+  }
+
+  .tet-board-column {
+    flex-direction: row;
+    align-items: center;
+  }
+
+  .tet-mobile-controls {
+    display: grid;
+    width: auto;
+    min-width: 180px;
+  }
+
+  .tet-sidebar {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    padding: 10px;
+    gap: 8px;
+  }
+
+  .tet-sidebar-header {
+    display: none;
+  }
+
+  .tet-preview-grid {
+    max-width: 72px;
   }
 }

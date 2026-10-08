@@ -208,7 +208,7 @@ export default function Memory() {
       onBack={() => navigate(`/${lang}/memory`)}
       leaderboardHref={leaderboardHref}
     >
-      <div className="game-page game-page--scroll">
+      <div className="game-page game-page--fit">
         <UsernameNotice />
 
         <div className="game-hud">
@@ -226,11 +226,16 @@ export default function Memory() {
           </div>
         </div>
 
-        <div className="mem-board-wrapper">
+        <div className="board-area mem-board-wrapper">
           <div
-            className="mem-board"
+            className="mem-board board-fit"
             style={
-              { gridTemplateColumns: `repeat(${difficulty.cols}, ${difficulty.cellSize}px)` } as CSSProperties
+              {
+                '--cols': difficulty.cols,
+                '--rows': difficulty.rows,
+                // Never grow past the designed card size, but shrink freely below it.
+                '--ideal-width': `${difficulty.cols * difficulty.cellSize}px`,
+              } as CSSProperties
             }
           >
             {cards.map((card) => (

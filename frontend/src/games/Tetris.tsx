@@ -146,19 +146,19 @@ type MobileAction = 'left' | 'right' | 'rotate' | 'drop' | 'hold' | 'hardDrop'
 type MobileControl = {
   labelKey: string
   action: MobileAction
-  /** Spans the full control row. */
-  wide?: boolean
+  /** Width in the six-column touch pad; a third of a row by default. */
+  size?: 'half' | 'wide'
   /** Keeps firing while held down. */
   repeat?: boolean
 }
 
 const MOBILE_CONTROLS: MobileControl[] = [
-  { labelKey: 'tetris.mobile.hold', action: 'hold', wide: true },
+  { labelKey: 'tetris.mobile.hold', action: 'hold', size: 'wide' },
   { labelKey: 'tetris.mobile.left', action: 'left', repeat: true },
   { labelKey: 'tetris.mobile.rotate', action: 'rotate' },
   { labelKey: 'tetris.mobile.right', action: 'right', repeat: true },
-  { labelKey: 'tetris.mobile.drop', action: 'drop', wide: true },
-  { labelKey: 'tetris.mobile.hardDrop', action: 'hardDrop', wide: true },
+  { labelKey: 'tetris.mobile.drop', action: 'drop', size: 'half' },
+  { labelKey: 'tetris.mobile.hardDrop', action: 'hardDrop', size: 'half' },
 ]
 
 function createEmptyRow(): BoardCell[] {
@@ -651,54 +651,56 @@ export default function Tetris() {
       onBack={() => navigate(modePath)}
       leaderboardHref={`${modePath}/leaderboard`}
     >
-      <div className="game-page game-page--center game-page--scroll">
+      <div className="game-page game-page--center">
         <div className="tet-play-card">
           <div className="tet-play-layout">
-            <div className="tet-board-shell">
-              <div
-                className="tet-board"
-                role="grid"
-                aria-label={`${t('tetris')} ${t('tetris.hud.mode')}: ${t(selectedMode.titleKey)}`}
-              >
-                {board.map((row, rowIndex) =>
-                  row.map((cell, columnIndex) => {
-                    const key = `${columnIndex}:${rowIndex}`
-                    const activeType = activeCells.has(key) ? piece.type : cell
-                    const isGhost = !activeType && landingCells.has(key)
-
-                    return (
-                      <div
-                        key={key}
-                        className={`tet-cell ${activeType ? 'tet-cell-filled' : ''} ${
-                          isGhost ? 'tet-cell-ghost' : ''
-                        }`}
-                        style={activeType ? { backgroundColor: PIECE_COLORS[activeType] } : undefined}
-                      />
-                    )
-                  }),
-                )}
-              </div>
-
-              {gameOver ? (
-                <ResultOverlay
-                  inset
-                  title={t('game.over')}
-                  detail={score}
-                  pending={leaderboard.submitting}
-                  rank={leaderboard.playerRank}
+            <div className="tet-board-column">
+              <div className="tet-board-shell">
+                <div
+                  className="tet-board"
+                  role="grid"
+                  aria-label={`${t('tetris')} ${t('tetris.hud.mode')}: ${t(selectedMode.titleKey)}`}
                 >
-                  <button className="btn btn-lg" onClick={restart} type="button">
-                    {t('btn.reset')}
-                  </button>
-                </ResultOverlay>
-              ) : null}
+                  {board.map((row, rowIndex) =>
+                    row.map((cell, columnIndex) => {
+                      const key = `${columnIndex}:${rowIndex}`
+                      const activeType = activeCells.has(key) ? piece.type : cell
+                      const isGhost = !activeType && landingCells.has(key)
+
+                      return (
+                        <div
+                          key={key}
+                          className={`tet-cell ${activeType ? 'tet-cell-filled' : ''} ${
+                            isGhost ? 'tet-cell-ghost' : ''
+                          }`}
+                          style={activeType ? { backgroundColor: PIECE_COLORS[activeType] } : undefined}
+                        />
+                      )
+                    }),
+                  )}
+                </div>
+
+                {gameOver ? (
+                  <ResultOverlay
+                    inset
+                    title={t('game.over')}
+                    detail={score}
+                    pending={leaderboard.submitting}
+                    rank={leaderboard.playerRank}
+                  >
+                    <button className="btn btn-lg" onClick={restart} type="button">
+                      {t('btn.reset')}
+                    </button>
+                  </ResultOverlay>
+                ) : null}
+              </div>
 
               <div className="tet-mobile-controls" aria-label={t('tetris.mobile.title')}>
                 {MOBILE_CONTROLS.map((control) => (
                   <button
                     key={control.action}
                     type="button"
-                    className={`tet-mobile-control ${control.wide ? 'tet-mobile-control-wide' : ''}`}
+                    className={`tet-mobile-control ${control.size ? `tet-mobile-control--${control.size}` : ''}`}
                     onPointerDown={(event) => {
                       event.preventDefault()
                       handleMobileControl(control.action)

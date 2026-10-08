@@ -34,12 +34,20 @@
   font-weight: 600;
 }
 
-@media (max-width: 600px) {
+@media (max-width: 768px) {
   .btn-lg {
     width: 100%;
     min-width: 0;
     padding: 14px 16px;
     font-size: 1rem;
+  }
+}
+
+/* Touch targets stay reachable without growing the chrome on short screens. */
+@media (max-height: 560px) {
+  .btn-lg {
+    padding: 9px 14px;
+    font-size: 0.92rem;
   }
 }
 

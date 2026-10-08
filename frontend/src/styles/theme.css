@@ -35,3 +35,18 @@
   --radius: 4px;
   --transition: 0.2s ease;
 }
+
+/*
+ * Breakpoints used across the app. Keep new media queries on this scale.
+ *   <= 480px   phone
+ *   <= 768px   large phone / small tablet
+ *   <= 1024px  tablet
+ *   >= 1440px  large desktop
+ *   (max-height: 560px)  short viewport, mostly phones in landscape
+ *
+ * index.css also bumps the root font size at 1600px and 2200px; that is type
+ * scaling for very large displays, not layout, and is deliberately separate.
+ *
+ * Where a component's own width matters more than the viewport's (the menu card,
+ * the leaderboard card) use a @container query instead of a breakpoint.
+ */

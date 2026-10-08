@@ -5,17 +5,20 @@
   width: min(100%, 540px);
   border: 1px solid var(--border);
   background: var(--surface);
-  padding: 20px;
+  padding: clamp(16px, 4vw, 20px);
   text-align: left;
+  /* Options react to the card's width, not the viewport's. */
+  container-type: inline-size;
 }
 
 .menu-card-title {
   margin: 0 0 16px;
-  font-size: clamp(1rem, 2.4vw, 1.6rem);
+  font-size: clamp(1rem, 4vw, 1.6rem);
   font-weight: 700;
   letter-spacing: 0.08em;
   text-transform: uppercase;
   text-align: center;
+  text-wrap: balance;
 }
 
 .menu-card .username-field {
@@ -34,6 +37,8 @@
   justify-content: space-between;
   gap: 16px;
   width: 100%;
+  /* Comfortable touch target on phones. */
+  min-height: 48px;
   padding: 14px 16px;
   border: 1px solid var(--border);
   background: var(--surface-2);
@@ -58,29 +63,42 @@
 
 .menu-option-meta {
   flex: 1 1 auto;
+  min-width: 0;
   color: #d0d0d0;
   font-size: 0.92rem;
   line-height: 1.45;
   text-align: right;
 }
 
-@media (max-width: 600px) {
-  .menu-card {
-    padding: 16px;
-  }
-
-  .menu-option {
-    padding: 12px 14px;
-  }
-
-  /* Long descriptions (Tetris modes) need their own line on narrow screens. */
+/* Long descriptions (Tetris modes) get their own line once the card is narrow,
+   whatever the viewport happens to be. */
+@container (max-width: 400px) {
   .menu-option--stack {
     align-items: flex-start;
     flex-direction: column;
-    gap: 8px;
+    gap: 6px;
   }
 
   .menu-option--stack .menu-option-meta {
     text-align: left;
+  }
+}
+
+@media (max-height: 560px) {
+  .menu-card-title {
+    margin-bottom: 10px;
+  }
+
+  .menu-card .username-field {
+    margin-bottom: 10px;
+  }
+
+  .menu-option {
+    min-height: 0;
+    padding: 10px 14px;
+  }
+
+  .menu-options {
+    gap: 8px;
   }
 }

@@ -1,50 +1,35 @@
-/* One leaderboard for every game. Minesweeper, Memory and Tetris each shipped a
-   prefixed copy of these rules on top of the shared file. */
+/* One leaderboard for every game. The card no longer scrolls inside itself with
+   a hidden scrollbar and a magic max-height; the frame around it scrolls. */
 
 .lb-page {
   justify-content: center;
   align-items: center;
-  overflow-y: auto;
-  overflow-x: hidden;
-  min-height: 0;
-  width: 100%;
-  position: relative;
-  -ms-overflow-style: none;
-  scrollbar-width: none;
 }
 
 .lb-card {
   width: min(100%, 620px);
-  max-height: calc(100dvh - 170px);
-  overflow-y: auto;
-  overflow-x: hidden;
   border: 1px solid var(--border);
   background: var(--surface);
-  padding: 20px;
+  padding: clamp(16px, 4vw, 20px);
   text-align: left;
-  -ms-overflow-style: none;
-  scrollbar-width: none;
-}
-
-.lb-page::-webkit-scrollbar,
-.lb-card::-webkit-scrollbar {
-  width: 0;
-  height: 0;
+  /* Rows and podium react to the card's width, not the viewport's. */
+  container-type: inline-size;
 }
 
 .lb-title {
   margin: 0 0 8px;
-  font-size: clamp(1rem, 2.4vw, 1.6rem);
+  font-size: clamp(1rem, 4vw, 1.6rem);
   font-weight: 700;
   letter-spacing: 0.08em;
   text-transform: uppercase;
   text-align: center;
+  text-wrap: balance;
 }
 
 .lb-meta {
   margin-bottom: 14px;
   color: var(--text-muted);
-  font-size: 0.92rem;
+  font-size: clamp(0.8rem, 2.6vw, 0.92rem);
   text-align: center;
 }
 
@@ -61,7 +46,7 @@
   width: 100%;
   min-width: 0;
   justify-content: space-between;
-  gap: 10px;
+  gap: clamp(6px, 2cqw, 14px);
   align-items: flex-end;
 }
 
@@ -75,7 +60,7 @@
   gap: 8px;
   border: 1px solid var(--border);
   background: linear-gradient(180deg, var(--hover) 0%, var(--surface) 100%);
-  padding: 16px 12px;
+  padding: clamp(10px, 3cqw, 16px) clamp(6px, 2cqw, 12px);
   text-align: center;
 }
 
@@ -99,14 +84,14 @@
 }
 
 .lb-podium-place {
-  font-size: 1rem;
+  font-size: clamp(0.82rem, 3cqw, 1rem);
   font-weight: 800;
   letter-spacing: 0.08em;
   text-transform: uppercase;
 }
 
 .lb-podium-name {
-  font-size: 0.92rem;
+  font-size: clamp(0.76rem, 2.8cqw, 0.92rem);
   font-weight: 700;
   color: #ececec;
   max-width: 100%;
@@ -116,19 +101,17 @@
 }
 
 .lb-podium-value {
-  font-size: clamp(1rem, 2vw, 1.3rem);
+  font-size: clamp(0.82rem, 3.4cqw, 1.3rem);
   font-weight: 800;
   width: 100%;
-  max-width: 11ch;
   text-align: center;
 }
 
 .lb-podium-date {
   width: 100%;
-  max-width: 10ch;
   text-align: center;
   color: var(--text-faint);
-  font-size: 0.82rem;
+  font-size: clamp(0.66rem, 2.4cqw, 0.82rem);
 }
 
 /* ── Ranked list ── */
@@ -143,7 +126,7 @@
 
 .lb-row {
   display: grid;
-  grid-template-columns: 56px minmax(0, 1fr) 11ch 10ch;
+  grid-template-columns: 3.5ch minmax(0, 1fr) 11ch 10ch;
   gap: 10px;
   align-items: center;
   border: 1px solid var(--border);
@@ -205,31 +188,39 @@
   font-size: 0.95rem;
 }
 
-@media (max-width: 600px) {
-  .lb-card {
-    padding: 16px;
-    max-height: calc(100dvh - 150px);
-  }
-
-  .lb-meta {
-    margin-bottom: 12px;
-  }
-
-  .lb-podium {
-    gap: 8px;
-  }
-
-  .lb-podium-slot {
-    padding: 14px 10px;
-  }
-
+/* Narrow card: the date moves under the name instead of being dropped. Every
+   cell is placed explicitly, or auto-placement stacks them on top of each
+   other once one item has a fixed row. */
+@container (max-width: 430px) {
   .lb-row {
-    gap: 8px;
-    padding: 10px 11px;
+    grid-template-columns: 3.5ch minmax(0, 1fr) auto;
+    row-gap: 2px;
+    column-gap: 8px;
+    padding: 8px 10px;
+  }
+
+  .lb-rank {
+    grid-area: 1 / 1 / 2 / 2;
+  }
+
+  .lb-name {
+    grid-area: 1 / 2 / 2 / 3;
+  }
+
+  .lb-value {
+    grid-area: 1 / 3 / 2 / 4;
+  }
+
+  .lb-date {
+    grid-area: 2 / 2 / 3 / 4;
+    text-align: left;
+    font-size: 0.72rem;
   }
 }
 
-@media (max-width: 420px) {
+/* Too narrow for three podium columns side by side. Phones at 375px still keep
+   the podium; this is for the very small end. */
+@container (max-width: 290px) {
   .lb-podium {
     display: grid;
     grid-template-columns: 1fr;
@@ -242,23 +233,12 @@
     order: initial;
     min-height: 0;
   }
-
-  .lb-row {
-    grid-template-columns: 48px minmax(0, 1fr);
-  }
-
-  .lb-value,
-  .lb-date {
-    grid-column: 1 / -1;
-  }
 }
 
-@media (min-width: 1000px) {
-  .lb-card {
-    max-height: calc(100dvh - 200px);
-  }
-
-  .lb-podium {
-    gap: 14px;
-  }
+@media (max-height: 560px) {
+  .lb-podium-1 { min-height: 140px; }
+  .lb-podium-2 { min-height: 128px; }
+  .lb-podium-3 { min-height: 100px; }
+  .lb-meta { margin-bottom: 10px; }
+  .lb-layout { gap: 10px; }
 }

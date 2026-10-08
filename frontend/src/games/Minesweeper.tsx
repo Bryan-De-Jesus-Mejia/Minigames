@@ -295,7 +295,7 @@ export default function Minesweeper() {
       onBack={() => navigate(`/${lang}/minesweeper`)}
       leaderboardHref={leaderboardHref}
     >
-      <div className="game-page">
+      <div className="game-page game-page--fit">
         <UsernameNotice />
 
         <div className="game-hud">
@@ -321,11 +321,16 @@ export default function Minesweeper() {
           </div>
         </div>
 
-        <div className="ms-board">
+        <div className="board-area ms-board">
           <div
-            className="ms-grid"
+            className="ms-grid board-fit"
             style={
-              { gridTemplateColumns: `repeat(${difficulty.cols}, ${difficulty.cellSize}px)` } as CSSProperties
+              {
+                '--cols': difficulty.cols,
+                '--rows': difficulty.rows,
+                // Never grow past the designed cell size, but shrink freely below it.
+                '--ideal-width': `${difficulty.cols * difficulty.cellSize}px`,
+              } as CSSProperties
             }
           >
             {board.map((cell) => (

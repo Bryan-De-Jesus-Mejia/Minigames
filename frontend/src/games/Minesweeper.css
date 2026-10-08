@@ -2,34 +2,31 @@
    leaderboard and overlays all come from the shared styles. */
 
 .ms-board {
-  width: 100%;
-  display: flex;
-  justify-content: center;
-  overflow: auto;
-  max-width: 100%;
-  /* Leave room for the frame header and the HUD above the board. */
-  max-height: calc(100vh - 140px);
-  padding: 8px 0;
-  -webkit-overflow-scrolling: touch;
+  padding: 4px 0;
 }
 
+/* The grid scales with the space available instead of being pinned to a fixed
+   pixel cell size, so a 25x25 board still fits a phone screen. */
 .ms-grid {
   display: grid;
-  gap: 0;
-  width: fit-content;
-  max-width: 100%;
+  grid-template-columns: repeat(var(--cols), minmax(0, 1fr));
+  grid-template-rows: repeat(var(--rows), minmax(0, 1fr));
+  /* Seams are what make individual cells readable; 0 turned the board into a
+     single dark rectangle on anything narrower than a laptop. */
+  gap: 1px;
   user-select: none;
 }
 
 .ms-cell {
-  width: 100%;
-  aspect-ratio: 1;
   display: flex;
   align-items: center;
   justify-content: center;
+  min-width: 0;
   background: var(--surface-2);
   font-weight: 700;
-  font-size: clamp(12px, 1.6vw, 16px);
+  /* Scales with the cell, which is itself a fraction of the grid. */
+  font-size: clamp(9px, calc(var(--ideal-width) / var(--cols) * 0.5), 16px);
+  line-height: 1;
   cursor: pointer;
 }
 
@@ -63,17 +60,13 @@
 .num-7 { color: #000000; }
 .num-8 { color: #666666; }
 
-@media (min-width: 1000px) {
-  .ms-board {
-    max-height: calc(100vh - 160px);
-  }
-
+@media (min-width: 1024px) {
   .ms-grid {
     gap: 3px;
   }
 }
 
-@media (min-width: 1400px) {
+@media (min-width: 1440px) {
   .ms-grid {
     gap: 4px;
   }

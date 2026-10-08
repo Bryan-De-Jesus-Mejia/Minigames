@@ -3,41 +3,35 @@
 
 .game-page {
   width: 100%;
-  height: 100%;
+  /* Fills the frame when content is short, grows (and scrolls the frame) when
+     it is tall. A fixed height here used to clip overflow out of reach. */
+  min-height: 100%;
   display: flex;
   flex-direction: column;
   align-items: center;
-  padding: clamp(16px, 4vw, 48px);
+  padding: clamp(12px, 3vw, 40px);
   background: var(--bg);
   color: var(--text);
-  overflow: hidden;
-}
-
-.game-page--scroll {
-  overflow: auto;
-  -webkit-overflow-scrolling: touch;
 }
 
 .game-page--center {
   justify-content: center;
 }
 
-@media (max-width: 600px) {
-  .game-page {
-    align-items: stretch;
-    padding: 12px;
-  }
+/*
+ * Play screens whose board should shrink to the viewport rather than push the
+ * page taller. A definite height is what lets .board-area resolve its flex
+ * leftover, so the grid's max-height has something to measure against. Content
+ * that still does not fit overflows downwards and the frame scrolls to it.
+ */
+.game-page--fit {
+  height: 100%;
+  justify-content: flex-start;
 }
 
-@media (min-width: 1000px) {
+@media (min-width: 1440px) {
   .game-page {
-    padding: 40px 80px;
-  }
-}
-
-@media (min-width: 1400px) {
-  .game-page {
-    padding: 56px 120px;
+    padding: 48px 80px;
   }
 }
 
@@ -49,14 +43,16 @@
   flex-direction: column;
   justify-content: center;
   align-items: center;
-  gap: 12px;
-  margin-bottom: 18px;
+  gap: 10px;
+  margin-bottom: clamp(10px, 2vh, 18px);
+  flex-shrink: 0;
 }
 
 .game-hud-info {
   font-weight: 600;
   text-align: center;
-  font-size: clamp(0.9rem, 1.2vw, 1.05rem);
+  font-size: clamp(0.82rem, 2.6vw, 1.05rem);
+  text-wrap: balance;
 }
 
 .game-hud-actions {
@@ -80,24 +76,61 @@
   font-feature-settings: 'tnum' 1;
 }
 
-@media (max-width: 600px) {
+@media (max-width: 768px) {
   .game-hud-actions {
     width: 100%;
   }
 
   .game-hud-actions .btn {
-    flex: 1;
+    flex: 1 1 0;
+    min-width: 0;
   }
 }
 
-@media (min-width: 1000px) {
+/* Landscape phones: give the board every pixel the chrome can spare. */
+@media (max-height: 560px) {
+  .game-page {
+    padding: 8px 12px;
+  }
+
   .game-hud {
-    margin-bottom: 24px;
+    margin-bottom: 8px;
+    gap: 6px;
   }
 }
 
-@media (min-width: 1400px) {
+@media (min-width: 1440px) {
   .game-hud {
     max-width: 1400px;
   }
+}
+
+/*
+ * Board area: takes the height the HUD leaves. It is a size container, so a
+ * board inside it can size itself against both cqw and cqh at once - that is
+ * what lets a square grid fit a short landscape screen without either
+ * stretching or overflowing.
+ */
+.board-area {
+  flex: 1 1 auto;
+  min-height: 0;
+  width: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  container-type: size;
+}
+
+/*
+ * Largest width that satisfies, in order: the container's width, the container's
+ * height once the aspect ratio is applied, and the board's designed size - with
+ * a floor so it never collapses on a very short viewport.
+ * Requires --cols, --rows and --ideal-width on the element.
+ */
+.board-fit {
+  width: min(
+    100cqw,
+    max(140px, min(calc(100cqh * var(--cols) / var(--rows)), var(--ideal-width)))
+  );
+  aspect-ratio: var(--cols) / var(--rows);
 }

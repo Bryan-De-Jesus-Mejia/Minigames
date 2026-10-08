@@ -1,23 +1,20 @@
 /* Only what is unique to Memory: the board and the card flip. */
 
 .mem-board-wrapper {
-  overflow: auto;
-  max-height: calc(100dvh - 200px);
-  display: flex;
-  justify-content: center;
-  padding: 4px;
-  -webkit-overflow-scrolling: touch;
-  scrollbar-gutter: stable both-edges;
+  padding: 4px 0;
 }
 
+/* Cards scale with the available space; the pixel size in the difficulty table
+   is now an upper bound rather than a fixed measurement. */
 .mem-board {
   display: grid;
-  gap: 6px;
-  flex-shrink: 0;
+  grid-template-columns: repeat(var(--cols), minmax(0, 1fr));
+  grid-template-rows: repeat(var(--rows), minmax(0, 1fr));
+  gap: clamp(3px, 1.2vmin, 6px);
 }
 
 .mem-card {
-  aspect-ratio: 1;
+  min-width: 0;
   perspective: 600px;
   cursor: pointer;
   user-select: none;
@@ -75,15 +72,8 @@
   display: block;
 }
 
-@media (max-width: 600px) {
-  .mem-board-wrapper {
-    justify-content: flex-start;
-    width: 100%;
-    max-height: calc(100dvh - 170px);
-    padding: 4px 0 12px;
-  }
-
-  .mem-board {
-    margin: 0 auto;
+@media (max-width: 480px) {
+  .mem-card-front {
+    font-size: clamp(8px, 3vw, 14px);
   }
 }
