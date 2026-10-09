@@ -3,7 +3,7 @@ import { useNavigate } from 'react-router-dom'
 import { useLanguage } from '../context/language'
 import { LanguageSwitch } from './LanguageSwitch'
 import { UsernameInput } from './UsernameInput'
-import { ArrowLeftIcon, TrophyIcon } from './icons'
+import { ArrowIcon, TrophyIcon } from './icons'
 import './GameFrame.css'
 
 interface GameFrameProps {
@@ -21,7 +21,7 @@ export function GameFrame({ gameName, onBack, leaderboardHref, children }: GameF
     <main className="game-frame">
       <div className="game-header">
         <button className="back-button" onClick={onBack} type="button">
-          <ArrowLeftIcon width={16} height={16} aria-hidden="true" />
+          <ArrowIcon direction="left" width={16} height={16} aria-hidden="true" />
           <span>{t('btn.back')}</span>
         </button>
         <h1 className="game-title">{gameName}</h1>

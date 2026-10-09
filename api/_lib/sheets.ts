@@ -15,7 +15,7 @@ export interface LeaderboardResult {
 }
 
 /** Games ranked by a high score; everything else is ranked by a low time. */
-const SCORE_GAMES = new Set(['tetris'])
+const SCORE_GAMES = new Set(['tetris', 'snake'])
 
 const MAX_ENTRIES = 15
 

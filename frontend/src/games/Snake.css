@@ -1,0 +1,93 @@
+/* Only what is unique to Snake. The page shell, HUD, buttons, menu card,
+   leaderboard and overlay all come from the shared styles. */
+
+.snake-board {
+  padding: 4px 0;
+  /* The board owns swipe gestures; stop the page from panning under a drag. */
+  touch-action: none;
+}
+
+.snake-grid {
+  display: grid;
+  grid-template-columns: repeat(var(--cols), minmax(0, 1fr));
+  grid-template-rows: repeat(var(--rows), minmax(0, 1fr));
+  gap: 1px;
+  user-select: none;
+}
+
+.snake-cell {
+  min-width: 0;
+  background: var(--surface-2);
+  border: 1px solid #252525;
+}
+
+.snake-cell-head {
+  background: #8bdc6a;
+  box-shadow: inset 0 0 0 1px rgba(0, 0, 0, 0.25);
+}
+
+.snake-cell-body {
+  background: #4caf50;
+}
+
+.snake-cell-food {
+  background: var(--danger);
+  border-radius: 50%;
+}
+
+@media (min-width: 1024px) {
+  .snake-grid {
+    gap: 2px;
+  }
+}
+
+/* ── Touch D-pad (shown only where there is no keyboard) ── */
+
+.snake-dpad {
+  display: none;
+  grid-template-columns: repeat(3, 56px);
+  grid-template-rows: repeat(3, 56px);
+  grid-template-areas:
+    '.    up    .'
+    'left .     right'
+    '.    down  .';
+  gap: 6px;
+  margin-top: 14px;
+  justify-content: center;
+}
+
+.snake-dpad-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border: 1px solid var(--border);
+  background: var(--surface-2);
+  color: var(--text);
+  cursor: pointer;
+  touch-action: manipulation;
+  user-select: none;
+}
+
+.snake-dpad-btn:hover,
+.snake-dpad-btn:active {
+  background: var(--hover);
+  border-color: var(--border-strong);
+}
+
+.snake-dpad-up { grid-area: up; }
+.snake-dpad-left { grid-area: left; }
+.snake-dpad-right { grid-area: right; }
+.snake-dpad-down { grid-area: down; }
+
+@media (max-width: 768px) {
+  .snake-dpad {
+    display: grid;
+  }
+}
+
+@media (max-width: 480px) {
+  .snake-dpad {
+    grid-template-columns: repeat(3, 48px);
+    grid-template-rows: repeat(3, 48px);
+  }
+}

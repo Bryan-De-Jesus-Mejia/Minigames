@@ -15,11 +15,17 @@ function Icon({
   )
 }
 
-export function ArrowLeftIcon(props: IconProps) {
+type ArrowDirection = 'left' | 'right' | 'up' | 'down'
+
+const ARROW_ROTATION: Record<ArrowDirection, number> = { left: 0, up: 90, right: 180, down: 270 }
+
+/** One path, rotated per direction — used for the back button and the Snake D-pad. */
+export function ArrowIcon({ direction = 'left', ...props }: IconProps & { direction?: ArrowDirection }) {
   return (
     <Icon {...props}>
       <path
         fillRule="evenodd"
+        transform={`rotate(${ARROW_ROTATION[direction]} 8 8)`}
         d="M15 8a.5.5 0 0 0-.5-.5H2.707l3.147-3.146a.5.5 0 1 0-.708-.708l-4 4a.5.5 0 0 0 0 .708l4 4a.5.5 0 0 0 .708-.708L2.707 8.5H14.5A.5.5 0 0 0 15 8z"
       />
     </Icon>

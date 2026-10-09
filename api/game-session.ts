@@ -27,10 +27,11 @@ export default function handler(req: VercelRequest, res: VercelResponse) {
   if (typeof game !== 'string' || typeof difficulty !== 'string') {
     return res.status(400).json({ error: 'game and difficulty are required' })
   }
-  const VALID_GAMES = ['minesweeper', 'memory', 'tetris']
+  const VALID_GAMES = ['minesweeper', 'memory', 'snake', 'tetris']
   const VALID_DIFFICULTIES_BY_GAME: Record<string, string[]> = {
     minesweeper: ['easy', 'medium', 'hard'],
     memory: ['easy', 'medium', 'hard'],
+    snake: ['easy', 'medium', 'hard'],
     tetris: ['classic', 'marathon', 'zen'],
   }
   if (!VALID_GAMES.includes(game) || !VALID_DIFFICULTIES_BY_GAME[game]?.includes(difficulty)) {

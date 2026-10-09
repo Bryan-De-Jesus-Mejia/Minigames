@@ -19,7 +19,7 @@ export type GameDefinition = {
 export const GAMES: GameDefinition[] = [
   { id: 'minesweeper', nameKey: 'minesweeper', Icon: MinesweeperIcon, playable: true },
   { id: 'memory', nameKey: 'memory', Icon: GridIcon, playable: true },
-  { id: 'snake', nameKey: 'snake', Icon: PlayIcon, playable: false },
+  { id: 'snake', nameKey: 'snake', Icon: PlayIcon, playable: true },
   { id: 'tetris', nameKey: 'tetris', Icon: KanbanIcon, playable: true },
   { id: 'flappybird', nameKey: 'flappybird', Icon: CloudIcon, playable: false },
 ]

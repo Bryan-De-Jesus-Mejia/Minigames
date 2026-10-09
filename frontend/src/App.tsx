@@ -10,6 +10,7 @@ import { Placeholder } from './games/Placeholder'
 
 const Minesweeper = lazy(() => import('./games/Minesweeper'))
 const Memory = lazy(() => import('./games/Memory'))
+const Snake = lazy(() => import('./games/Snake'))
 const Tetris = lazy(() => import('./games/Tetris'))
 
 const HOME = `/${DEFAULT_LANGUAGE}`
@@ -55,6 +56,10 @@ export default function App() {
         <Route path="memory" element={<Lazy><Memory /></Lazy>} />
         <Route path="memory/:difficulty" element={<Lazy><Memory /></Lazy>} />
         <Route path="memory/:difficulty/leaderboard" element={<Lazy><Memory /></Lazy>} />
+
+        <Route path="snake" element={<Lazy><Snake /></Lazy>} />
+        <Route path="snake/:difficulty" element={<Lazy><Snake /></Lazy>} />
+        <Route path="snake/:difficulty/leaderboard" element={<Lazy><Snake /></Lazy>} />
 
         <Route path="tetris" element={<Lazy><Tetris /></Lazy>} />
         <Route path="tetris/:mode" element={<Lazy><Tetris /></Lazy>} />
